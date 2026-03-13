@@ -36,8 +36,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Contract smoke test
+        run: npm run test:contracts
+
       - name: Build web
         run: npm run build
+
+      - name: Integration smoke
+        run: bash infra/scripts/ci-smoke.sh
 
       - name: Set image tag
         id: meta

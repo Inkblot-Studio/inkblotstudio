@@ -2,11 +2,14 @@ import { Pool } from 'pg';
 import type { LeadRecord, LeadStatus } from '../../lead-schema';
 
 const memoryStore = new Map<string, LeadRecord>();
+let poolInstance: Pool | null = null;
 
 function getPool(): Pool | null {
 	const connectionString = import.meta.env.DATABASE_URL;
 	if (!connectionString) return null;
-	return new Pool({ connectionString });
+	if (poolInstance) return poolInstance;
+	poolInstance = new Pool({ connectionString, max: 10, idleTimeoutMillis: 10_000 });
+	return poolInstance;
 }
 
 export async function insertLeadRecord(record: LeadRecord): Promise<void> {

@@ -1,5 +1,7 @@
+---
 import Layout from '../layouts/Layout.astro';
 import HeroScene from '../components/HeroScene';
+import NarrativeFlowScene from '../components/NarrativeFlowScene';
 import StrategyCallForm from '../components/StrategyCallForm';
 ---
 
@@ -85,6 +87,21 @@ import StrategyCallForm from '../components/StrategyCallForm';
 					<h3 class="mt-2 text-xl font-semibold">Optimize</h3>
 					<p class="muted mt-3">Continuously tune orchestration and outcomes with a 3-month retainer.</p>
 				</article>
+			</div>
+		</section>
+
+		<section class="site-container py-8 md:py-12">
+			<div class="grid items-center gap-6 md:grid-cols-[1fr_1.1fr]">
+				<div>
+					<h2 class="text-3xl font-semibold md:text-4xl">See how your workflow evolves under one intelligent layer.</h2>
+					<p class="muted mt-4 text-lg">
+						This narrative view models how disconnected operational steps become one guided flow. It
+						uses adaptive rendering to keep performance and accessibility balanced across devices.
+					</p>
+				</div>
+				<div class="section-card overflow-hidden rounded-3xl p-3">
+					<NarrativeFlowScene client:load />
+				</div>
 			</div>
 		</section>
 

@@ -12,9 +12,10 @@ import { captureServerError, initSentry } from '../../lib/observability/sentry';
 export const POST: APIRoute = async ({ request, clientAddress }) => {
 	initSentry();
 	const requestId = getOrCreateRequestId(request);
-	const ip = clientAddress ?? request.headers.get('x-forwarded-for') ?? 'unknown';
+	const ipHeader = request.headers.get('x-forwarded-for');
+	const ip = clientAddress ?? ipHeader?.split(',')[0]?.trim() ?? 'unknown';
 
-	if (isRateLimited(`lead:${ip}`)) {
+	if (await isRateLimited(`lead:${ip}`)) {
 		return new Response(JSON.stringify({ ok: false, error: 'Too many requests. Please retry shortly.' }), {
 			status: 429,
 			headers: { 'Content-Type': 'application/json', 'x-request-id': requestId },

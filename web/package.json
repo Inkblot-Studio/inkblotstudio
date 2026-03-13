@@ -10,7 +10,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "worker": "tsx src/worker/start.ts"
+    "worker": "tsx src/worker/start.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "astro check",
+    "test:contracts": "tsx scripts/contracts-smoke.ts"
   },
   "dependencies": {
     "@astrojs/node": "^10.0.1",
@@ -35,6 +38,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.7",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

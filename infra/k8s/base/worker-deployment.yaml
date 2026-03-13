@@ -20,6 +20,16 @@ spec:
           envFrom:
             - secretRef:
                 name: web-secrets
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pgrep -f \"tsx src/worker/start.ts\" >/dev/null || pgrep -f \"node\" >/dev/null"]
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pgrep -f \"tsx src/worker/start.ts\" >/dev/null || pgrep -f \"node\" >/dev/null"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
           resources:
             requests:
               cpu: 100m

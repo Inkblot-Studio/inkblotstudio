@@ -26,6 +26,13 @@ Run lead worker locally:
 npm run worker
 ```
 
+One-command local stack from repository root:
+
+```bash
+bash infra/scripts/local-up.sh
+bash infra/scripts/local-smoke.sh
+```
+
 ## Environment
 
 Create `.env` from `.env.example`:
@@ -60,6 +67,9 @@ cp .env.example .env
 | `npm run build`           | Builds server output to `./dist/`               |
 | `npm run preview`         | Preview build locally                            |
 | `npm run worker`          | Runs lead worker process                         |
+| `npm run lint`            | Astro diagnostics and type-aware checks          |
+| `npm run typecheck`       | TypeScript no-emit validation                    |
+| `npm run test:contracts`  | Schema and scoring contract smoke test           |
 
 ## Infra and Operations
 

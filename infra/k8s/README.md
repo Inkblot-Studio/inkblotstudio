@@ -4,6 +4,7 @@
 
 - `staging` namespace: `inkblot-web-staging`
 - `prod` namespace: `inkblot-web-prod`
+- Namespaces are managed by overlay manifests (`overlays/*/namespace.yaml`).
 
 ## Required Secrets
 
