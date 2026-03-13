@@ -1,4 +1,4 @@
-export const analyticsEventNames = [
+export const telemetryEventNames = [
 	'lead_form_open',
 	'lead_form_submit_attempt',
 	'lead_form_submit_success',
@@ -7,15 +7,15 @@ export const analyticsEventNames = [
 	'immersive_world_quality_degrade',
 ] as const;
 
-export type AnalyticsEventName = (typeof analyticsEventNames)[number];
+export type TelemetryEventName = (typeof telemetryEventNames)[number];
 
-export type AnalyticsEvent = {
-	name: AnalyticsEventName;
+export type TelemetryEvent = {
+	name: TelemetryEventName;
 	timestamp: string;
 	properties?: Record<string, string | number | boolean>;
 };
 
-export async function trackAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
+export async function trackTelemetryEvent(event: TelemetryEvent): Promise<void> {
 	const endpoint = import.meta.env.PUBLIC_ANALYTICS_ENDPOINT;
 	if (!endpoint) return;
 

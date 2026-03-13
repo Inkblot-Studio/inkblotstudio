@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { leadSchema } from '../lib/lead-schema';
-import { trackAnalyticsEvent } from '../lib/analytics/events';
+import { trackTelemetryEvent } from '../lib/telemetry/events';
 
 type FormState = {
 	companyName: string;
@@ -73,7 +73,7 @@ export default function StrategyCallForm() {
 		event.preventDefault();
 		setError(null);
 		setSuccess(null);
-		trackAnalyticsEvent({
+		trackTelemetryEvent({
 			name: 'lead_form_submit_attempt',
 			timestamp: new Date().toISOString(),
 			properties: { page: 'home' },
@@ -82,7 +82,7 @@ export default function StrategyCallForm() {
 		const validation = leadSchema.safeParse(form);
 		if (!validation.success) {
 			setError('Please complete all required fields before submitting.');
-			trackAnalyticsEvent({
+			trackTelemetryEvent({
 				name: 'lead_form_submit_error',
 				timestamp: new Date().toISOString(),
 				properties: { reason: 'validation' },
@@ -101,7 +101,7 @@ export default function StrategyCallForm() {
 			const data = (await response.json()) as SubmitResponse;
 			if (!response.ok || !data.ok) {
 				setError(data.error ?? 'We could not submit your request. Please try again.');
-				trackAnalyticsEvent({
+				trackTelemetryEvent({
 					name: 'lead_form_submit_error',
 					timestamp: new Date().toISOString(),
 					properties: { reason: data.error ?? 'unknown', status: response.status },
@@ -114,7 +114,7 @@ export default function StrategyCallForm() {
 					? `${data.message ?? 'Submitted successfully.'} Reference: ${data.leadId}. Status: ${data.status ?? 'new'}`
 					: (data.message ?? 'Submitted successfully.'),
 			);
-			trackAnalyticsEvent({
+			trackTelemetryEvent({
 				name: 'lead_form_submit_success',
 				timestamp: new Date().toISOString(),
 				properties: { hasLeadId: Boolean(data.leadId) },
@@ -122,7 +122,7 @@ export default function StrategyCallForm() {
 			setForm(initialForm);
 		} catch {
 			setError('Network error. Please try again in a moment.');
-			trackAnalyticsEvent({
+			trackTelemetryEvent({
 				name: 'lead_form_submit_error',
 				timestamp: new Date().toISOString(),
 				properties: { reason: 'network' },
@@ -138,7 +138,7 @@ export default function StrategyCallForm() {
 			onFocus={() => {
 				if (trackedOpen) return;
 				setTrackedOpen(true);
-				trackAnalyticsEvent({
+				trackTelemetryEvent({
 					name: 'lead_form_open',
 					timestamp: new Date().toISOString(),
 					properties: { page: 'home' },

@@ -3,7 +3,7 @@ import { OrbitControls, Points, PointMaterial, Sphere } from '@react-three/drei'
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Group } from 'three';
 import type { PerspectiveCamera } from 'three';
-import { trackAnalyticsEvent } from '../../lib/analytics/events';
+import { trackTelemetryEvent } from '../../lib/telemetry/events';
 import {
 	degradeTier,
 	detectInitialQualityTier,
@@ -112,7 +112,7 @@ export default function ImmersiveWorld() {
 		const chapter = Math.min(Math.floor(progress * worldChapters.length), worldChapters.length - 1);
 		if (chapter !== activeChapterIndex) {
 			setActiveChapterIndex(chapter);
-			trackAnalyticsEvent({
+			trackTelemetryEvent({
 				name: 'immersive_world_chapter_change',
 				timestamp: new Date().toISOString(),
 				properties: { chapter: worldChapters[chapter]?.id ?? 'unknown' },
@@ -131,7 +131,7 @@ export default function ImmersiveWorld() {
 		if (avg > 26 && !degradedRef.current) {
 			degradedRef.current = true;
 			setTier((current) => degradeTier(current));
-			trackAnalyticsEvent({
+			trackTelemetryEvent({
 				name: 'immersive_world_quality_degrade',
 				timestamp: new Date().toISOString(),
 				properties: { averageFrameMs: Math.round(avg) },
