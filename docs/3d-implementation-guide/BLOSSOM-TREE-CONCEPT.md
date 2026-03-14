@@ -2,6 +2,15 @@
 
 > **Creative direction:** A premium 3D web experience centered on a stylized blossom tree. Ethereal, luxury, future-defining — like stepping into a digital sakura garden.
 
+### No 3D Authoring? Alternative Concepts
+
+If you can't create models in Blender/Spline, see [11-TREE-CREATION-RESEARCH.md](11-TREE-CREATION-RESEARCH.md) §0:
+
+- **ez-tree** — Procedural tree in code (`@dgreenheck/ez-tree`). No export.
+- **Particle-only** — Pivot to "Blossom Cloud": dense particles, no tree geometry.
+- **Free assets** — Sketchfab CC0/CC-BY cherry blossom trees.
+- **Abstract geometric** — Torus, ribbon, or curve. Same narrative, easier to build.
+
 ---
 
 ## Visual References (Generated)
@@ -24,6 +33,7 @@ The blossom tree symbolizes **growth, renewal, and organic intelligence**. Unlik
 ### Central 3D Element
 
 - **Hero object:** Stylized cherry blossom tree (abstract, not literal).
+- **Creation:** Pre-made GLB (Spline AI or Blender) for organic silhouette; procedural particle petals. Avoid raw cylinders/spheres. See [11-TREE-CREATION-RESEARCH.md](11-TREE-CREATION-RESEARCH.md).
 - **Material:** Translucent branches, emissive blossom nodes, soft glow.
 - **Motion:** Gentle sway, floating petals, particle trails in blossom colors.
 - **Interaction:** Pointer influences branch sway and particle flow; blossoms react to hover.
@@ -199,6 +209,17 @@ Professional loading screen with progress (0–100%). See [10-LOADING-SCREEN-GUI
 | Abstract "A" form | Living tree metaphor |
 | Metallic, electric | Soft, organic, luminous |
 | Cold premium | Warm premium |
+
+---
+
+## Concept Variant: Blossom Cloud (No Tree Geometry)
+
+If you pivot to particle-only (no 3D authoring):
+
+- **Hero:** Dense blossom particle cloud. Implied shape, not literal tree.
+- **Narrative:** Same — growth, renewal, organic intelligence. "A bloom of possibility."
+- **Implementation:** 500–800 particles, petal texture, soft sphere distribution, slow drift, bloom.
+- **Layout:** Same. Scroll CTA, nav, plum/charcoal background. Particles replace tree as focal point.
 
 ---
 

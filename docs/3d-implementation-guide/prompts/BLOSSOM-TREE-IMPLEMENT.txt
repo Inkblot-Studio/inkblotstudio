@@ -1,0 +1,27 @@
+BLOSSOM TREE IMPLEMENTATION PROMPT
+Reference: docs/3d-implementation-guide/ (use guides for detail)
+
+TREE: Options (no Blender/Spline): 1) ez-tree (@dgreenheck/ez-tree) procedural in-code. 2) Free Sketchfab GLB. 3) Particle-only "Blossom Cloud" - no tree geometry. 4) Abstract geometric (TorusKnot, TubeGeometry). See 11-TREE-CREATION-RESEARCH.md §0.
+DO NOT use raw CylinderGeometry/SphereGeometry - looks cheap.
+Materials: getBlossomColors().glowHex for emissive.
+
+PETALS: Points or InstancedMesh, petal texture (soft edge), 200-500, slow drift.
+TRAILS: Line2 or GPUComputationRenderer. See 12-SHADER-TOOLS-COMPETITION-GUIDE.md.
+POST: postprocessing Bloom 0.35, luminanceThreshold 0.9. ToneMapping.
+
+LIBS: postprocessing, @react-three/postprocessing, @funtech-inc/use-shader-fx, glsl-noise, three.meshline.
+
+PARAMS (from 02-INTERACTION-INPUT-GUIDE §11):
+MAX_ROTATION=0.14 LERP=0.04 IDLE_TIMEOUT=4000 pointerInfluence=0.02
+Touch: disable parallax. Hover scale 1.02, 150ms.
+
+SCROLL (from 05-CREATIVE-MOTION-GUIDE):
+0-0.15 hero | 0.15-0.4 capability tree scale 1→0.6 | 0.4-0.7 proof | 0.7-1 conversion
+easeInOutCubic, throttle 60fps, prefers-reduced-motion→instant.
+
+COLOR: getBlossomColors(theme?) from web/src/lib/theme/blossom-theme.ts
+Presets: spring autumn winter. data-theme on <html>.
+
+EFFECTS: bloom 0.3-0.4, particles max 500-800, trails 1-2, parallax 8° max.
+
+FONTS: Geist/Satoshi display 500-600, Geist/Inter body 400.

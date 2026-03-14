@@ -53,6 +53,8 @@ Use `getBlossomColors(theme?)` from `web/src/lib/theme/blossom-theme.ts`. Pass t
 
 ## References
 
+- [12-SHADER-TOOLS-COMPETITION-GUIDE.md](../../../docs/3d-implementation-guide/12-SHADER-TOOLS-COMPETITION-GUIDE.md) — Shader libs, particles, post-processing
+- [13-COMPETITION-IMPLEMENTATION-PROCESS.md](../../../docs/3d-implementation-guide/13-COMPETITION-IMPLEMENTATION-PROCESS.md) — Full process
 - [BLOSSOM-TREE-CONCEPT.md](../../../docs/3d-implementation-guide/BLOSSOM-TREE-CONCEPT.md)
 - [02-INTERACTION-INPUT-GUIDE.md](../../../docs/3d-implementation-guide/02-INTERACTION-INPUT-GUIDE.md) §11
 - [05-CREATIVE-MOTION-GUIDE.md](../../../docs/3d-implementation-guide/05-CREATIVE-MOTION-GUIDE.md)

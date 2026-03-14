@@ -887,6 +887,13 @@ const IDLE_TIMEOUT_MS = 3000;
 const REDUCED_MOTION_DURATION_MS = 0;
 ```
 
+## A.4 Shader & Competition Guides
+
+For activetheory-level quality:
+
+- **[12-SHADER-TOOLS-COMPETITION-GUIDE.md](12-SHADER-TOOLS-COMPETITION-GUIDE.md)** — Shader libraries (use-shader-fx, glsl-noise), particle systems (GPUComputationRenderer), post-processing (postprocessing), trails (Line2, three-meshline), noise, full pipeline.
+- **[13-COMPETITION-IMPLEMENTATION-PROCESS.md](13-COMPETITION-IMPLEMENTATION-PROCESS.md)** — Step-by-step process from setup to polish, day-by-day.
+
 ---
 
 *End of Master Guide. Proceed to section-specific guides for deeper implementation detail.*

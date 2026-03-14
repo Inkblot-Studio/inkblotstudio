@@ -25,8 +25,15 @@ This guide set is designed for:
 | [08-INTEGRATION-CODE-PATTERNS-GUIDE.md](./08-INTEGRATION-CODE-PATTERNS-GUIDE.md) | ~260 | R3F, React, Astro, cleanup, structure |
 | [09-VISUAL-REFERENCE-ACTIVETHEORY-BEYOND.md](./09-VISUAL-REFERENCE-ACTIVETHEORY-BEYOND.md) | ~250 | Activetheory analysis, colors, theme config, font stack |
 | [10-LOADING-SCREEN-GUIDE.md](./10-LOADING-SCREEN-GUIDE.md) | ~120 | Loading screen layout, progress, timing, styling |
+| [11-TREE-CREATION-RESEARCH.md](./11-TREE-CREATION-RESEARCH.md) | ~150 | Tree creation approach, procedural vs GLB, AI tools, token prompts |
+| [12-SHADER-TOOLS-COMPETITION-GUIDE.md](./12-SHADER-TOOLS-COMPETITION-GUIDE.md) | ~280 | Shader libs, particles, post-processing, noise, trails, activetheory-level pipeline |
+| [13-COMPETITION-IMPLEMENTATION-PROCESS.md](./13-COMPETITION-IMPLEMENTATION-PROCESS.md) | ~220 | Step-by-step process from setup to polish, day-by-day |
 
-**Total: 2300+ lines**
+**Prompts (token-optimized):** `prompts/BLOSSOM-TREE-IMPLEMENT.txt` — @reference when implementing.
+
+**[AI-IMPLEMENTATION-INSTRUCTIONS.md](./AI-IMPLEMENTATION-INSTRUCTIONS.md)** — Which model, which files to @, which skill, dependencies, order.
+
+**Total: 3000+ lines**
 
 ## How to Use
 

@@ -252,4 +252,12 @@ gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 
 ---
 
-*Use this guide with 00-MASTER-GUIDE.md Section 7.*
+---
+
+## 9. Shader Library Reference
+
+For full shader libraries, particle systems, post-processing, and competition pipeline, see [12-SHADER-TOOLS-COMPETITION-GUIDE.md](./12-SHADER-TOOLS-COMPETITION-GUIDE.md).
+
+---
+
+*Use this guide with 00-MASTER-GUIDE.md Section 7 and 12-SHADER-TOOLS-COMPETITION-GUIDE.md.*
