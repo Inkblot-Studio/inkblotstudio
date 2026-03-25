@@ -41,10 +41,6 @@ void main() {
     vec3 pos = position;
 
     // --- 1. SHAPE THE VOLUMETRIC PETAL ---
-    // The geometry is a BoxGeometry or extruded shape, so we have thickness in Z initially,
-    // but let's assume we are using a PlaneGeometry that we displace to have "virtual" thickness,
-    // OR we actually use a thick geometry. Let's assume we passed a BoxGeometry(1, 1, 0.05).
-    // Let's taper the width towards the tip and base to make a teardrop shape.
     float widthShape = sin(ny * 3.14159);
     pos.x *= mix(0.1, 1.0, widthShape);
     
@@ -60,29 +56,35 @@ void main() {
     float localBloom = smoothstep(layerDelay, layerDelay + 0.6, bloomTarget);
     
     // Closed bend vs Open bend
-    float closedBend = 1.5; 
-    float openBend = -1.0 - (aLayerIndex * 0.5); // Outer petals bend further down
+    float closedBend = 1.0 + (aLayerIndex * 0.5); // Tighter curl over the center 
+    float openBend = -0.5 - (aLayerIndex * 0.5); // Outer petals bend further down
     
     float currentBend = mix(closedBend, openBend, localBloom);
-    pos.z += ny * ny * currentBend;
+    // Taper the bend effect towards the base so the root stays attached to the center
+    float bendFactor = smoothstep(0.0, 0.4, ny);
+    pos.z += ny * ny * currentBend * bendFactor;
 
     // Calculate thickness for Subsurface Scattering (thinner at edges and tips)
     vThickness = (1.0 - abs(nx)) * (1.0 - ny);
 
     // --- 2. APPLY INSTANCE TRANSFORM (Polar) ---
-    // Pitch outwards. Closed = standing straight up. Open = laying flat.
-    float closedPitch = aLayerIndex * 0.1; 
+    // Pitch outwards. Closed = standing straight up, leaning inward. Open = laying flat.
+    float closedPitch = aLayerIndex * 0.1; // Point inward slightly
     float openPitch = aInstancePitch;
     float currentPitch = mix(closedPitch, openPitch, localBloom);
+    
+    // Taper pitch towards base
+    currentPitch *= bendFactor;
     
     mat4 pitchRot = rotationMatrixLocal(vec3(1.0, 0.0, 0.0), currentPitch);
     pos = (pitchRot * vec4(pos, 1.0)).xyz;
     
-    // Radius expansion
-    float currentRadius = aInstanceRadius * mix(0.1, 1.0, localBloom);
+    // Move out from center by radius
+    // When blooming, it expands out further
+    float currentRadius = aInstanceRadius * mix(0.2, 1.0, localBloom);
     pos.z += currentRadius;
     
-    // Rotate around center
+    // Rotate around the central Y axis
     mat4 yawRot = rotationMatrixLocal(vec3(0.0, 1.0, 0.0), aInstanceAngle);
     pos = (yawRot * vec4(pos, 1.0)).xyz;
 
@@ -97,11 +99,15 @@ void main() {
     
     // Audio reaction (pulse from the core)
     float pulse = sin(uTime * 3.0 - aInstanceRadius * 2.0) * uAudioLow * 0.4;
-    pos += normalize(pos + vec3(0.0, 1.0, 0.0)) * pulse * ny;
+    pos += normalize(pos + vec3(0.001, 1.0, 0.001)) * pulse * ny;
     
     pos += sway;
 
     // --- 4. FINAL POSITION & NORMALS ---
+    #ifdef USE_INSTANCING
+      pos = (instanceMatrix * vec4(pos, 1.0)).xyz;
+    #endif
+
     vec4 worldPosition = modelMatrix * vec4(pos, 1.0);
     vec4 mvPosition = viewMatrix * worldPosition;
     
@@ -112,5 +118,10 @@ void main() {
     vec3 localNormal = normal; // Assuming geometry has proper normals
     localNormal = (pitchRot * vec4(localNormal, 0.0)).xyz;
     localNormal = (yawRot * vec4(localNormal, 0.0)).xyz;
+    
+    #ifdef USE_INSTANCING
+      localNormal = (instanceMatrix * vec4(localNormal, 0.0)).xyz;
+    #endif
+    
     vNormal = normalize((modelMatrix * vec4(localNormal, 0.0)).xyz);
 }

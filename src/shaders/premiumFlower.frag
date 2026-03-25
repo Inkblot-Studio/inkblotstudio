@@ -34,12 +34,12 @@ void main() {
     
     // Attenuate by distance
     float coreIntensity = 3.0 / (1.0 + distToCore * distToCore * 0.1);
-    vec3 sssLight = uAccentColor * scatter * coreIntensity;
+    vec3 sssLight = uAccentColor * scatter * coreIntensity * 0.2;
 
     // --- 2. SURFACE COLOR & VELVET SHADING ---
     // The outer layers are darker, inner layers are brighter and more vibrant
     vec3 baseColor = mix(uPrimaryColor * 0.2, uPrimaryColor, 1.0 - (vLayerIndex * 0.3));
-    vec3 tipColor = mix(uHoverColor * 0.5, uHoverColor, 1.0 - (vLayerIndex * 0.3));
+    vec3 tipColor = mix(uHoverColor * 0.5, uHoverColor * 1.5, 1.0 - (vLayerIndex * 0.3));
     
     // Gradient from base to tip
     vec3 color = mix(baseColor, tipColor, vUv.y);
@@ -47,7 +47,7 @@ void main() {
     // Velvet / Micro-facet Rim Lighting (Fresnel)
     // Darkens facing angles and violently brightens grazing angles
     float fresnel = 1.0 - max(dot(viewDir, normal), 0.0);
-    fresnel = fresnel * fresnel * fresnel;
+    fresnel = fresnel * fresnel; // Softened fresnel so it's not strictly on the very edge
     
     // Iridescence on the rim: shifts between Hover Blue and Accent Green
     vec3 rimColor = mix(uHoverColor, uAccentColor, sin(vUv.y * 10.0 + uTime) * 0.5 + 0.5);
@@ -60,16 +60,29 @@ void main() {
     color += uAccentColor * veinMask * 0.3 * (1.0 - vLayerIndex * 0.4); // Stronger on inner petals
 
     // --- 4. FINAL COMPOSITE ---
-    // Add standard directional/ambient fill to keep it from being pitch black
-    vec3 fillLight = vec3(0.02, 0.03, 0.08); // Dark blue ambient
+    // Main Key Light from the front-top-right to illuminate the flower
+    // Place the light source much closer and directly in front of the flower
+    vec3 keyLightPos = vec3(0.0, 5.0, 10.0);
+    vec3 keyLightDir = normalize(keyLightPos - vWorldPosition);
     
-    vec3 finalColor = color * fillLight + sssLight + rimLight;
+    // Soft diffuse wrapping (Lambertian)
+    float diffuse = max(0.0, dot(normal, keyLightDir));
+    // Wrap the lighting aggressively so it wraps around the curved petals
+    diffuse = diffuse * 0.7 + 0.3; 
+    
+    // Bright surface illumination
+    vec3 surfaceIllumination = color * diffuse * 1.5;
+    
+    // Ambient fill
+    vec3 fillLight = color * vec3(0.5, 0.6, 0.8);
+    
+    vec3 finalColor = surfaceIllumination + fillLight + sssLight + rimLight;
     
     // Increase emissive output near the very tip of the innermost layer
     if (vLayerIndex < 0.5) {
-        finalColor += uAccentColor * smoothstep(0.8, 1.0, vUv.y) * 2.0;
+        finalColor += uAccentColor * smoothstep(0.7, 1.0, vUv.y) * 2.0;
     }
 
-    // Output final color (solid for depth sorting, relying on bloom for soft edges)
+    // Output final color
     gl_FragColor = vec4(finalColor, 1.0);
 }

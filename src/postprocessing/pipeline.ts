@@ -23,9 +23,9 @@ export class PostprocessingPipeline {
 
     this.bloomPass = new UnrealBloomPass(
       new Vector2(window.innerWidth, window.innerHeight),
-      1.5, // strength
-      0.9, // radius
-      0.6  // threshold
+      2.0, // strength
+      0.8, // radius
+      1.5  // High threshold so ONLY the bioluminescent edges and core bloom
     );
     this.composer.addPass(this.bloomPass);
 

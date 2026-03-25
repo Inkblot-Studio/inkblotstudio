@@ -75,20 +75,24 @@ export class InkblotScene {
   // ── Cinematic Lighting ───────────────────────────────────────────────────
 
   private setupLights(): void {
-    // 1. Fill Light — Soft, cool blue (#2563EB) coming from front-top-left
-    const fillLight = new DirectionalLight(PALETTE.primary, 0.5);
-    fillLight.position.set(-5, 5, 5);
+    // 1. Fill Light — Bright, cool blue (#2563EB) coming from front-top-left
+    const fillLight = new DirectionalLight(PALETTE.primary, 8.0);
+    fillLight.position.set(-5, 5, 10);
     this.instance.add(fillLight);
 
+    // 1b. Front Key Light - Bright white/blue from front-right
+    // Reduced intensity so it doesn't blow out the bloom
+    const frontKey = new DirectionalLight(0xffffff, 8.0);
+    frontKey.position.set(5, 5, 10);
+    this.instance.add(frontKey);
+
     // 2. Rim Light — Sharp, high-intensity hover blue (#60A5FA) from the back-right
-    // to catch the microscopic edges of the petals.
-    const rimLight = new DirectionalLight(PALETTE.primaryHover, 2.0);
+    const rimLight = new DirectionalLight(PALETTE.primaryHover, 15.0);
     rimLight.position.set(5, 2, -10);
     this.instance.add(rimLight);
 
     // 3. Core Light — Intense, warm/greenish (#10B981) point light situated inside 
-    // the flower to give it an internal glow that bleeds through via subsurface scattering.
-    const coreLight = new PointLight(PALETTE.accent, 2.5, 10);
+    const coreLight = new PointLight(PALETTE.accent, 15.0, 15);
     coreLight.position.set(0, 0, 0); // Positioned at the origin, inside the flower
     this.instance.add(coreLight);
   }

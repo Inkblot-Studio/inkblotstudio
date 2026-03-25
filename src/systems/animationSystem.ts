@@ -49,9 +49,9 @@ export class AnimationSystem implements ISystem {
       const ease = this.easeInOutSine(nt);
 
       // Start: Pulled back, wide shot of the closed bud
-      const startPos = { x: 0, y: 3.0, z: 12.0 };
+      const startPos = { x: 0, y: 3.0, z: 25.0 };
       // Mid: Orbiting around as it blooms
-      const midPos = { x: -6, y: 4, z: 8 };
+      const midPos = { x: -10, y: 5, z: 12 };
 
       targetX = this.lerp(startPos.x, midPos.x, ease);
       targetY = this.lerp(startPos.y, midPos.y, ease);
@@ -59,16 +59,16 @@ export class AnimationSystem implements ISystem {
 
       // Look at the center of the flower
       lookX = 0;
-      lookY = 1;
+      lookY = 3; // Look higher up since flower is larger
       lookZ = 0;
     } else {
       // Transition from MID (t=0.5) to END (t=1)
       const nt = (t - 0.5) / 0.5;
       const ease = this.easeInOutSine(nt);
 
-      const midPos = { x: -6, y: 4, z: 8 };
+      const midPos = { x: -10, y: 5, z: 12 };
       // End: Diving into the core
-      const endPos = { x: 0, y: 1.0, z: 2.0 };
+      const endPos = { x: 0, y: 3.0, z: 4.0 };
 
       targetX = this.lerp(midPos.x, endPos.x, ease);
       targetY = this.lerp(midPos.y, endPos.y, ease);
@@ -76,7 +76,7 @@ export class AnimationSystem implements ISystem {
 
       // Still looking at the core
       lookX = 0;
-      lookY = 0;
+      lookY = 3;
       lookZ = 0;
     }
 

@@ -21,9 +21,9 @@ export class PremiumFlowerComponent implements IComponent {
   init(ctx: FrameContext): void {
     // Volumetric geometry: a thin box instead of a plane to give physical weight
     // Subdivided heavily on Y to allow for smooth curling
-    const geometry = new BoxGeometry(1.5, 3.5, 0.02, 16, 32, 1);
+    const geometry = new BoxGeometry(2, 6, 0.02, 16, 32, 1);
     // Shift origin so the pivot is at the base
-    geometry.translate(0, 1.75, 0);
+    geometry.translate(0, 3.0, 0);
 
     this.material = new ShaderMaterial({
       vertexShader: premiumFlowerVert,
@@ -48,6 +48,8 @@ export class PremiumFlowerComponent implements IComponent {
 
     const dummy = new Object3D();
     for (let i = 0; i < this.petalCount; i++) {
+      dummy.position.set(0, 0, 0);
+      dummy.updateMatrix();
       this.mesh.setMatrixAt(i, dummy.matrix);
     }
 
@@ -89,6 +91,7 @@ export class PremiumFlowerComponent implements IComponent {
 
     // Place at origin
     this.mesh.position.set(0, -1, 0);
+    this.mesh.instanceMatrix.needsUpdate = true;
     ctx.scene.add(this.mesh);
   }
 
