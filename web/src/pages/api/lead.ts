@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { z } from 'zod';
 import { leadSchema } from '../../lib/lead-schema';
 import { routeLeadForManualReview } from '../../lib/server/lead-routing';
 import { scoreLead } from '../../lib/server/scoring/lead-scoring';
@@ -24,7 +25,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
 	try {
 		const rawBody = await request.json();
-		const parsed = leadSchema.safeParse(rawBody);
+		const parsed = z.safeParse(leadSchema, rawBody);
 
 		if (!parsed.success) {
 			return new Response(

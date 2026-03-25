@@ -1,19 +1,12 @@
-import { useMemo, useState } from 'react';
-import clsx from 'clsx';
+import { useState } from 'react';
+import { z } from 'zod';
 import { leadSchema } from '../lib/lead-schema';
 import { trackTelemetryEvent } from '../lib/telemetry/events';
 
 type FormState = {
-	companyName: string;
-	country: string;
-	industry: string;
-	painPoints: string[];
-	whatTried: string;
-	investmentReady90Days: boolean;
-	timeline: 'now' | '1-2-months' | '3-plus-months';
-	role: 'owner-exec' | 'ops-lead' | 'manager' | 'other';
-	workEmail: string;
-	website: string;
+	name: string;
+	email: string;
+	note: string;
 };
 
 type SubmitResponse = {
@@ -21,53 +14,16 @@ type SubmitResponse = {
 	message?: string;
 	error?: string;
 	leadId?: string;
-	status?: 'new' | 'qualified' | 'needs_info' | 'declined';
-};
-
-const painOptions = [
-	'Disconnected tools',
-	'Manual handoffs',
-	'Slow reporting',
-	'Booking and form chaos',
-	'No clear workflow control',
-];
-
-const initialForm: FormState = {
-	companyName: '',
-	country: '',
-	industry: '',
-	painPoints: [],
-	whatTried: '',
-	investmentReady90Days: true,
-	timeline: '1-2-months',
-	role: 'ops-lead',
-	workEmail: '',
-	website: '',
+	status?: string;
 };
 
 export default function StrategyCallForm() {
-	const [form, setForm] = useState<FormState>(initialForm);
+	const [form, setForm] = useState<FormState>({ name: '', email: '', note: '' });
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
-	const [trackedOpen, setTrackedOpen] = useState(false);
 
-	const canSubmit = useMemo(() => {
-		const validation = leadSchema.safeParse(form);
-		return validation.success;
-	}, [form]);
-
-	function togglePainPoint(point: string) {
-		setForm((current) => {
-			const alreadySelected = current.painPoints.includes(point);
-			return {
-				...current,
-				painPoints: alreadySelected
-					? current.painPoints.filter((item) => item !== point)
-					: [...current.painPoints, point].slice(0, 5),
-			};
-		});
-	}
+	const canSubmit = form.name.trim().length >= 2 && form.email.includes('@');
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -79,14 +35,9 @@ export default function StrategyCallForm() {
 			properties: { page: 'home' },
 		});
 
-		const validation = leadSchema.safeParse(form);
+		const validation = z.safeParse(leadSchema, form);
 		if (!validation.success) {
-			setError('Please complete all required fields before submitting.');
-			trackTelemetryEvent({
-				name: 'lead_form_submit_error',
-				timestamp: new Date().toISOString(),
-				properties: { reason: 'validation' },
-			});
+			setError('Please complete all required fields.');
 			return;
 		}
 
@@ -101,175 +52,50 @@ export default function StrategyCallForm() {
 			const data = (await response.json()) as SubmitResponse;
 			if (!response.ok || !data.ok) {
 				setError(data.error ?? 'We could not submit your request. Please try again.');
-				trackTelemetryEvent({
-					name: 'lead_form_submit_error',
-					timestamp: new Date().toISOString(),
-					properties: { reason: data.error ?? 'unknown', status: response.status },
-				});
 				return;
 			}
 
-			setSuccess(
-				data.leadId
-					? `${data.message ?? 'Submitted successfully.'} Reference: ${data.leadId}. Status: ${data.status ?? 'new'}`
-					: (data.message ?? 'Submitted successfully.'),
-			);
-			trackTelemetryEvent({
-				name: 'lead_form_submit_success',
-				timestamp: new Date().toISOString(),
-				properties: { hasLeadId: Boolean(data.leadId) },
-			});
-			setForm(initialForm);
+			setSuccess(data.message ?? 'Submitted successfully.');
+			setForm({ name: '', email: '', note: '' });
 		} catch {
-			setError('Network error. Please try again in a moment.');
-			trackTelemetryEvent({
-				name: 'lead_form_submit_error',
-				timestamp: new Date().toISOString(),
-				properties: { reason: 'network' },
-			});
+			setError('Network error. Please try again.');
 		} finally {
 			setSubmitting(false);
 		}
 	}
 
 	return (
-		<form
-			onSubmit={onSubmit}
-			onFocus={() => {
-				if (trackedOpen) return;
-				setTrackedOpen(true);
-				trackTelemetryEvent({
-					name: 'lead_form_open',
-					timestamp: new Date().toISOString(),
-					properties: { page: 'home' },
-				});
-			}}
-			className="section-card mt-8 rounded-2xl p-6"
-		>
-			<div className="grid gap-4 md:grid-cols-2">
-				<input
-					value={form.website}
-					onChange={(event) => setForm((current) => ({ ...current, website: event.target.value }))}
-					className="hidden"
-					tabIndex={-1}
-					autoComplete="off"
-					aria-hidden="true"
-				/>
+		<form onSubmit={onSubmit} className="section-card mt-8 rounded-2xl p-6">
+			<div className="flex flex-col gap-4">
 				<label className="text-sm">
-					Company Name
+					Name
 					<input
-						value={form.companyName}
-						onChange={(event) => setForm((current) => ({ ...current, companyName: event.target.value }))}
+						value={form.name}
+						onChange={(e) => setForm((c) => ({ ...c, name: e.target.value }))}
 						className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-3 py-2"
 						required
+						minLength={2}
 					/>
 				</label>
 				<label className="text-sm">
-					Work Email
+					Email
 					<input
 						type="email"
-						value={form.workEmail}
-						onChange={(event) => setForm((current) => ({ ...current, workEmail: event.target.value }))}
+						value={form.email}
+						onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))}
 						className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-3 py-2"
 						required
 					/>
 				</label>
 				<label className="text-sm">
-					Country
-					<input
-						value={form.country}
-						onChange={(event) => setForm((current) => ({ ...current, country: event.target.value }))}
-						className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-3 py-2"
-						required
-					/>
-				</label>
-				<label className="text-sm">
-					Industry
-					<input
-						value={form.industry}
-						onChange={(event) => setForm((current) => ({ ...current, industry: event.target.value }))}
-						className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-3 py-2"
-						required
-					/>
-				</label>
-				<label className="text-sm md:col-span-2">
-					What have you already tried?
+					Note
 					<textarea
-						value={form.whatTried}
-						onChange={(event) => setForm((current) => ({ ...current, whatTried: event.target.value }))}
-						className="mt-2 min-h-24 w-full rounded-xl border border-white/15 bg-slate-950/60 px-3 py-2"
-						required
+						value={form.note}
+						onChange={(e) => setForm((c) => ({ ...c, note: e.target.value }))}
+						className="mt-2 min-h-20 w-full rounded-xl border border-white/15 bg-slate-950/60 px-3 py-2"
+						placeholder="Optional"
+						rows={3}
 					/>
-				</label>
-			</div>
-
-			<div className="mt-5">
-				<p className="text-sm">Main pain points</p>
-				<div className="mt-2 flex flex-wrap gap-2">
-					{painOptions.map((option) => {
-						const active = form.painPoints.includes(option);
-						return (
-							<button
-								key={option}
-								type="button"
-								onClick={() => togglePainPoint(option)}
-								className={clsx(
-									'rounded-full border px-3 py-1 text-sm transition',
-									active
-										? 'border-inkblot-cyan bg-inkblot-cyan/10 text-inkblot-cyan-soft'
-										: 'border-white/20 text-white hover:border-inkblot-cyan/60',
-								)}
-							>
-								{option}
-							</button>
-						);
-					})}
-				</div>
-			</div>
-
-			<div className="mt-5 grid gap-4 md:grid-cols-3">
-				<label className="text-sm">
-					Timeline
-					<select
-						value={form.timeline}
-						onChange={(event) =>
-							setForm((current) => ({
-								...current,
-								timeline: event.target.value as FormState['timeline'],
-							}))
-						}
-						className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-3 py-2"
-					>
-						<option value="now">Now</option>
-						<option value="1-2-months">1-2 months</option>
-						<option value="3-plus-months">3+ months</option>
-					</select>
-				</label>
-				<label className="text-sm">
-					Your Role
-					<select
-						value={form.role}
-						onChange={(event) =>
-							setForm((current) => ({ ...current, role: event.target.value as FormState['role'] }))
-						}
-						className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/60 px-3 py-2"
-					>
-						<option value="owner-exec">Owner / Executive</option>
-						<option value="ops-lead">Operations Lead</option>
-						<option value="manager">Manager</option>
-						<option value="other">Other</option>
-					</select>
-				</label>
-				<label className="flex items-end gap-2 text-sm">
-					<input
-						type="checkbox"
-						checked={form.investmentReady90Days}
-						onChange={(event) =>
-							setForm((current) => ({ ...current, investmentReady90Days: event.target.checked }))
-						}
-						className="h-4 w-4"
-					/>
-					Ready to invest in the next 90 days
 				</label>
 			</div>
 
@@ -279,14 +105,13 @@ export default function StrategyCallForm() {
 			<button
 				type="submit"
 				disabled={submitting || !canSubmit}
-				className={clsx(
-					'mt-6 rounded-full px-6 py-3 text-sm font-semibold transition',
+				className={
 					submitting || !canSubmit
-						? 'cursor-not-allowed bg-slate-600 text-slate-300'
-						: 'bg-inkblot-cyan text-slate-950 hover:bg-inkblot-cyan-soft',
-				)}
+						? 'mt-6 cursor-not-allowed rounded-full bg-slate-600 px-6 py-3 text-sm font-semibold text-slate-300'
+						: 'mt-6 rounded-full bg-inkblot-cyan px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-inkblot-cyan-soft'
+				}
 			>
-				{submitting ? 'Submitting...' : 'Request Strategy Review'}
+				{submitting ? 'Submitting...' : 'Submit'}
 			</button>
 		</form>
 	);

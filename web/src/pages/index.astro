@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import StrategyCallForm from '../components/StrategyCallForm';
-import ImmersiveWorld from '../components/world/ImmersiveWorld';
+import CodeExperience from '../components/world/code/CodeExperience';
 ---
 
 <Layout
@@ -9,7 +9,7 @@ import ImmersiveWorld from '../components/world/ImmersiveWorld';
 	description="Fully immersive 3D AI operating system experience."
 >
 	<main>
-		<ImmersiveWorld client:only="react" />
+		<CodeExperience client:only="react" />
 
 		<section id="strategy-call" class="site-container py-20">
 			<div class="section-card rounded-3xl p-8 md:p-12">

@@ -7,6 +7,15 @@
 	--inkblot-cyan-soft: #8aeaff;
 	--inkblot-text-soft: #b9c4e2;
 	--inkblot-card: rgba(19, 30, 62, 0.7);
+	--blossom-color: #ffb7c5;
+}
+
+html[data-theme="autumn"] {
+	--blossom-color: #e8a87c;
+}
+
+html[data-theme="winter"] {
+	--blossom-color: #e8f4f8;
 }
 
 @theme inline {
