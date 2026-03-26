@@ -50,7 +50,8 @@ Self-contained Three.js module for the Citron ecosystem. It lives under **`engin
 Helper entry points:
 
 - `defaultFlowerLayers()` — opinionated 4-ring layout you can clone and tweak.
-- `createCitronBloomScene()` — adds **double DNA spines**, a **leaf halo** curve, **floral assembly**, and **GPGPU particles**.
+- `createCitronBloomScene()` — **double DNA spines**, **leaf halo**, **floral assembly**, a **living particle moss ground** (small stem hole, fills the hero view), and optional sparse trees via `{ enableRingForest: true }` (muted bark/needle colors). The default **flower** experience enables the ring from `flowerBloomExperience`. Pointer drives ground + ring via `setPointerWorld`.
+- **Dual-scene scroll blend** (Inkblot flower mode): [`createBloomTransitionScene`](examples/createBloomTransitionScene.ts) is the secondary scene; journey blend is `computeJourneyDualSceneBlend` in the app (`src/journey/sectionMap.ts`) driving [`CitronBloomComposer.setSceneTransition`](bloom-postprocess/citronBloomComposer.ts). **Runtime experience swap**: [`BloomExperienceSwapController`](bloom-runtime/bloomExperienceTransition.ts) + [`setExperienceBlackout`](bloom-postprocess/citronBloomComposer.ts) on the journey pass; in dev, `window.inkblotEngine?.swapBloomExperience('stomp')`.
 
 ## Usage (programmatic)
 

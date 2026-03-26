@@ -1,6 +1,6 @@
 ---
 description: Citron Bloom engine, scroll-to-bloom, delicate camera, and Inkblot integration
-globs: engines/citron-bloom/**/*.{ts,tsx},src/main.ts,src/components/citronBloomComponent.ts,src/systems/animationSystem.ts,src/components/sections3D.ts
+globs: engines/citron-bloom/**/*.{ts,tsx},src/inkblotApp.ts,src/components/citronBloomComponent.ts,src/systems/animationSystem.ts,src/components/sections3D.ts
 alwaysApply: false
 ---
 
@@ -12,7 +12,7 @@ alwaysApply: false
 - **`?fluid`**: Raymarched fluid flower + **orbit** camera (`AnimationSystem` `orbit` mode).
 - **Production**: Bloom only with `?citronBloom` (`=medium` | `low` for LOD).
 
-`parseCitronBloomMode()` lives in [`src/main.ts`](src/main.ts).
+`parseCitronBloomMode()` lives in [`src/inkblotApp.ts`](src/inkblotApp.ts).
 
 ## Engine layout (`engines/citron-bloom/`)
 
@@ -30,7 +30,7 @@ Path alias: `@citron-bloom-engine` → `engines/citron-bloom`.
 ## Scroll → bloom
 
 - [`ScrollSystem`](src/systems/scrollSystem.ts) damps `progress` [0,1]; virtual scroll height in [`index.html`](index.html) (`#virtual-scroll-space`).
-- Tick order in [`main.ts`](src/main.ts): `scrollSystem` → `interactionSystem` → `setScrollProgress` + `animationSystem` → `audioSystem`, then `citronBloomComponent.setBloomFromScroll`, then components.
+- Tick order in [`inkblotApp.ts`](src/inkblotApp.ts): `scrollSystem` → `interactionSystem` → `setScrollProgress` + `animationSystem` → `audioSystem`, then `citronBloomComponent.setBloomFromScroll`, then components.
 - Easing: [`CitronBloomComponent.setBloomFromScroll`](src/components/citronBloomComponent.ts); phase smoothing: [`createCitronBloomScene`](engines/citron-bloom/examples/createCitronBloomScene.ts) `BloomPhaseController` `smoothSpeed`.
 
 ## Camera
@@ -51,7 +51,7 @@ Path alias: `@citron-bloom-engine` → `engines/citron-bloom`.
 ## Tuning
 
 - **LOD**: `BLOOM_LOD_PROFILES` in [`bloom-core/types.ts`](engines/citron-bloom/bloom-core/types.ts).
-- **Post (bloom mode)**: `CitronBloomComposer` constructor options in [`main.ts`](src/main.ts) + defaults in [`citronBloomComposer.ts`](engines/citron-bloom/bloom-postprocess/citronBloomComposer.ts).
+- **Post (bloom mode)**: `CitronBloomComposer` constructor options in [`inkblotApp.ts`](src/inkblotApp.ts) + defaults in [`citronBloomComposer.ts`](engines/citron-bloom/bloom-postprocess/citronBloomComposer.ts).
 
 When changing bloom timing, coordinate **scroll mapping**, **phase `smoothSpeed`**, and **virtual scroll height** together.
 

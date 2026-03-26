@@ -19,7 +19,8 @@ const blendShader = {
     uBlend: { value: 0 },
     uTime: { value: 0 },
     uParallax: { value: new Vector2(0, 0) },
-    uDistortion: { value: 0.045 },
+    uDistortion: { value: 0.032 },
+    uTransitionFx: { value: 0 },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -35,17 +36,19 @@ const blendShader = {
     uniform float uTime;
     uniform vec2 uParallax;
     uniform float uDistortion;
+    uniform float uTransitionFx;
     varying vec2 vUv;
 
     void main() {
       float t = clamp(uBlend, 0.0, 1.0);
       float mid = 1.0 - abs(t - 0.5) * 2.0;
+      float fx = clamp(uTransitionFx, 0.0, 1.0);
 
       float wob = sin(uTime * 1.15 + vUv.y * 14.0) * cos(uTime * 0.85 + vUv.x * 11.0);
-      vec2 warp = vec2(wob, -wob * 0.65) * uDistortion * mid;
+      vec2 warp = vec2(wob, -wob * 0.65) * uDistortion * mid * fx;
 
-      vec2 uvA = vUv + uParallax * 0.042 * (1.0 - t) + warp * (1.0 - t);
-      vec2 uvB = vUv - uParallax * 0.055 * t - warp * t;
+      vec2 uvA = vUv + uParallax * 0.042 * (1.0 - t) * fx + warp * (1.0 - t);
+      vec2 uvB = vUv - uParallax * 0.055 * t * fx - warp * t;
 
       vec4 a = texture2D(tSceneA, uvA);
       vec4 b = texture2D(tSceneB, uvB);
@@ -73,7 +76,8 @@ export class DualSceneBlendPass extends Pass {
   blend = 0;
   time = 0;
   readonly parallax = new Vector2(0, 0);
-  distortionStrength = 0.045;
+  distortionStrength = 0.032;
+  transitionFx = 0;
 
   constructor(sceneA: Scene, sceneB: Scene, camera: Camera, width: number, height: number) {
     super();
@@ -112,6 +116,10 @@ export class DualSceneBlendPass extends Pass {
     this.distortionStrength = n;
   }
 
+  setTransitionFx(n: number): void {
+    this.transitionFx = Math.max(0, Math.min(1, n));
+  }
+
   render(
     renderer: WebGLRenderer,
     writeBuffer: WebGLRenderTarget,
@@ -138,6 +146,7 @@ export class DualSceneBlendPass extends Pass {
     this.material.uniforms.uTime.value = this.time;
     this.material.uniforms.uParallax.value.copy(this.parallax);
     this.material.uniforms.uDistortion.value = this.distortionStrength;
+    this.material.uniforms.uTransitionFx.value = this.transitionFx;
 
     const target = this.renderToScreen ? null : readBuffer;
     renderer.setRenderTarget(target);

@@ -12,12 +12,14 @@ import type { InteractionSystem } from '@/systems/interactionSystem';
 export class CitronBloomComponent implements IComponent {
   private active: BloomExperienceScene | null = null;
   private interaction: InteractionSystem | null = null;
+  private currentExperienceId: string;
 
   constructor(
     private readonly lod: BloomLod,
-    private readonly experienceId: string,
+    initialExperienceId: string,
     interaction?: InteractionSystem,
   ) {
+    this.currentExperienceId = initialExperienceId;
     this.interaction = interaction ?? null;
   }
 
@@ -25,14 +27,32 @@ export class CitronBloomComponent implements IComponent {
     registerDefaultBloomExperiences();
     try {
       this.active = bloomExperienceRegistry.activate(
-        this.experienceId,
+        this.currentExperienceId,
         ctx.scene,
         ctx.renderer,
         this.lod,
       );
     } catch {
+      this.currentExperienceId = 'flower';
       this.active = bloomExperienceRegistry.activate('flower', ctx.scene, ctx.renderer, this.lod);
     }
+  }
+
+  /** In-runtime swap (pairs with {@link BloomExperienceSwapController}). */
+  activateExperience(experienceId: string, ctx: FrameContext): void {
+    registerDefaultBloomExperiences();
+    bloomExperienceRegistry.disposeActive();
+    try {
+      this.active = bloomExperienceRegistry.activate(experienceId, ctx.scene, ctx.renderer, this.lod);
+      this.currentExperienceId = experienceId;
+    } catch {
+      this.active = bloomExperienceRegistry.activate('flower', ctx.scene, ctx.renderer, this.lod);
+      this.currentExperienceId = 'flower';
+    }
+  }
+
+  getExperienceId(): string {
+    return this.currentExperienceId;
   }
 
   update(ctx: FrameContext): void {
@@ -40,6 +60,11 @@ export class CitronBloomComponent implements IComponent {
     if (this.interaction && this.active?.setPointerWorld) {
       this.active.setPointerWorld(this.interaction.pointer.x * 2.2, this.interaction.pointer.y * 1.4);
     }
+  }
+
+  /** Call after {@link InkblotCamera.update} so env particles use the frame’s camera pose. */
+  syncEnvParticlesCamera(ctx: FrameContext): void {
+    this.active?.syncEnvCamera?.(ctx.camera);
   }
 
   getCameraMode(): BloomCameraMode {

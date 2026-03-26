@@ -20,6 +20,12 @@ export function smootherstep(edge0: number, edge1: number, x: number): number {
   return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
+/** CSS-like ease-in-out (cubic), close to `transition: 0.5s ease-in-out`. */
+export function easeInOutCubic(t: number): number {
+  const x = clamp(t, 0, 1);
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
 /** Re-map `value` from range [inMin, inMax] to [outMin, outMax]. */
 export function remap(
   value: number,

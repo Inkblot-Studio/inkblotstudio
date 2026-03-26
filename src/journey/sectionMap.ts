@@ -1,4 +1,4 @@
-import { clamp } from '@/utils/math';
+import { clamp, smoothstep } from '@/utils/math';
 
 export const JOURNEY_SECTION_COUNT = 6;
 
@@ -79,4 +79,38 @@ export function resolveJourney(
     sectionStart: start,
     sectionEnd: end,
   };
+}
+
+/**
+ * Drives {@link CitronBloomComposer.setSceneTransition}: mix primary scene (flower + journey) with
+ * the secondary “bloom transition” scene across the six journey acts.
+ */
+export function computeJourneyDualSceneBlend(j: JourneyState): number {
+  const { section, localT } = j;
+  if (section === 0) return smoothstep(0.2, 0.94, localT) * 0.44;
+  /** Logo act: primary scene only — no secondary “transition” composite behind the hero. */
+  if (section === 1) return 0;
+  if (section === 2) {
+    const ramp = smoothstep(0, 0.32, localT);
+    return ramp * (0.74 - smoothstep(0, 1, localT) * 0.14);
+  }
+  if (section === 3) return 0.6 + smoothstep(0, 1, localT) * 0.22;
+  if (section === 4) return 0.82;
+  return 0.82 * (1 - smoothstep(0.12, 0.88, localT));
+}
+
+const SECTION_TRANSITION_EDGE = 0.2;
+
+/**
+ * 0 = stable act (no dual-scene warp / parallax swim / heavy film); 1 = at section in/out.
+ * Used so journey reads calm mid-scroll and only “moves” when crossing acts.
+ */
+export function computeJourneySectionTransitionFx(j: JourneyState): number {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return 0;
+  }
+  const { localT } = j;
+  const atStart = 1 - smoothstep(0, SECTION_TRANSITION_EDGE, localT);
+  const atEnd = smoothstep(1 - SECTION_TRANSITION_EDGE, 1, localT);
+  return Math.max(atStart, atEnd);
 }

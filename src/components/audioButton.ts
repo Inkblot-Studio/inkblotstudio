@@ -39,7 +39,7 @@ export class AudioButtonComponent implements IComponent {
     this.mesh = new Mesh(geometry, this.material);
     
     // HUD setup usually places this in a specific corner. 
-    // We will let the main.ts manage the Orthographic layout, 
+    // Orthographic layout is owned by the inkblot runtime (HUD pass), 
     // but default it near bottom right.
     this.mesh.position.set(0, 0, 0);
 
@@ -58,7 +58,7 @@ export class AudioButtonComponent implements IComponent {
     this.material.uniforms.uIsPlaying.value = this.audioSys.isPlaying ? 1.0 : 0.0;
     this.material.uniforms.uAudioHigh.value = this.audioSys.highFrequencyVolume;
 
-    // We do NOT handle clicking here, main.ts will handle Raycasting the HUD scene and calling audioSys.toggleAudio()
+    // Clicking is handled by the inkblot runtime (HUD raycast → audioSys.toggleAudio)
   }
 
   dispose(): void {

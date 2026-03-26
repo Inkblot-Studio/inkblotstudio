@@ -1,14 +1,21 @@
+import type { Camera } from 'three';
 import {
   AdditiveBlending,
+  Color,
   Group,
   Mesh,
   PlaneGeometry,
+  PointLight,
   ShaderMaterial,
 } from 'three';
+import type { BloomLod } from '../bloom-core/types';
+import { createParticleFlow } from '../bloom-particle-env/particle-flow/createParticleFlow';
+import { createParticleInterior } from '../bloom-particle-env/particle-interior/createParticleInterior';
 
 export interface LabPortalHandle {
   readonly group: Group;
-  update(elapsed: number, localT: number): void;
+  update(delta: number, elapsed: number, localT: number): void;
+  syncEnvCamera(camera: Camera): void;
   dispose(): void;
 }
 
@@ -43,7 +50,12 @@ void main() {
 }
 `;
 
-export function createLabPortalScene(): LabPortalHandle {
+export interface CreateLabPortalSceneOptions {
+  lod?: BloomLod;
+}
+
+export function createLabPortalScene(options: CreateLabPortalSceneOptions = {}): LabPortalHandle {
+  const lod = options.lod ?? 'high';
   const group = new Group();
 
   const backMat = new ShaderMaterial({
@@ -72,6 +84,44 @@ export function createLabPortalScene(): LabPortalHandle {
   back.position.set(0, 1.2, -4.2);
   group.add(back);
 
+  const pillar = new Color(0x355a62);
+  const arch = new Color(0x6ec8e0);
+
+  const interior = createParticleInterior({
+    lod,
+    particleBudget: lod === 'low' ? 2800 : lod === 'medium' ? 4000 : 5200,
+    columns: lod === 'low' ? 6 : 7,
+    height: 3.05,
+    radius: 2.45,
+    pillarColor: pillar,
+    archColor: arch,
+  });
+  interior.group.name = 'lab-particle-cathedral';
+  interior.group.position.set(0, 0.02, -2.72);
+  interior.group.scale.setScalar(0.92);
+  group.add(interior.group);
+
+  const flow = createParticleFlow({
+    lod,
+    particleBudget: lod === 'low' ? 1400 : lod === 'medium' ? 2200 : 2800,
+    turns: 2.8,
+    radius: 0.72,
+    height: 2.05,
+    flowStrength: 1.05,
+  });
+  flow.group.name = 'lab-particle-flow';
+  flow.group.position.set(0.05, 0.95, -2.58);
+  flow.group.scale.setScalar(0.92);
+  group.add(flow.group);
+
+  const fillCool = new PointLight(0x5599cc, 0.62, 16);
+  fillCool.position.set(-1.35, 2.35, -1.85);
+  group.add(fillCool);
+
+  const fillWarm = new PointLight(0x88c4aa, 0.38, 12);
+  fillWarm.position.set(1.4, 1.15, -2.1);
+  group.add(fillWarm);
+
   const portalMat = new ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -91,6 +141,7 @@ export function createLabPortalScene(): LabPortalHandle {
   });
   const portal = new Mesh(new PlaneGeometry(5.2, 5.2), portalMat);
   portal.position.set(0, 1.35, -2.85);
+  portal.renderOrder = 2;
   group.add(portal);
 
   const floorMat = new ShaderMaterial({
@@ -119,20 +170,30 @@ export function createLabPortalScene(): LabPortalHandle {
 
   return {
     group,
-    update(elapsed: number, localT: number) {
+    update(delta: number, elapsed: number, localT: number) {
       backMat.uniforms.uTime.value = elapsed;
       backMat.uniforms.uLocalT.value = localT;
       portalMat.uniforms.uTime.value = elapsed;
       portalMat.uniforms.uLocalT.value = localT;
       floorMat.uniforms.uTime.value = elapsed;
+      interior.update(delta, elapsed);
+      flow.update(delta, elapsed);
+    },
+    syncEnvCamera(camera: Camera) {
+      interior.syncEnvCamera?.(camera);
+      flow.syncEnvCamera?.(camera);
     },
     dispose() {
+      interior.dispose();
+      flow.dispose();
       back.geometry.dispose();
       backMat.dispose();
       portal.geometry.dispose();
       portalMat.dispose();
       floor.geometry.dispose();
       floorMat.dispose();
+      fillCool.dispose();
+      fillWarm.dispose();
     },
   };
 }

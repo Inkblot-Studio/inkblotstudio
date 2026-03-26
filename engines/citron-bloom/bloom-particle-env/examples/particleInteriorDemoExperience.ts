@@ -38,6 +38,10 @@ export function createParticleInteriorDemoExperience(ctx: BloomSceneFactoryConte
       interior.update(delta, elapsed);
       flow.update(delta, elapsed);
     },
+    syncEnvCamera(camera) {
+      interior.syncEnvCamera?.(camera);
+      flow.syncEnvCamera?.(camera);
+    },
     dispose() {
       interior.dispose();
       flow.dispose();

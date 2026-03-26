@@ -13,6 +13,11 @@ export interface RendererOptions {
   antialias?: boolean;
   /** Device pixel ratio cap — prevents GPU over-stress on high-DPI screens. */
   maxPixelRatio?: number;
+  /**
+   * Scales the internal buffer used for mesh transmission (glass). 1 = sharpest;
+   * lower values save GPU on medium/low bloom LOD when physical glass is active.
+   */
+  transmissionResolutionScale?: number;
 }
 
 /**
@@ -31,7 +36,12 @@ export class InkblotRenderer {
   private readonly container: HTMLElement;
   private readonly maxPixelRatio: number;
 
-  constructor({ container, antialias = true, maxPixelRatio = 2 }: RendererOptions) {
+  constructor({
+    container,
+    antialias = true,
+    maxPixelRatio = 2,
+    transmissionResolutionScale = 1,
+  }: RendererOptions) {
     this.container = container;
     this.maxPixelRatio = maxPixelRatio;
 
@@ -49,8 +59,7 @@ export class InkblotRenderer {
 
     gl.outputColorSpace = SRGBColorSpace;
 
-    /** Full-res buffer for mesh transmission — avoids downscaled / soft glass. */
-    gl.transmissionResolutionScale = 1;
+    gl.transmissionResolutionScale = transmissionResolutionScale;
 
     // Shadows
     gl.shadowMap.enabled = true;

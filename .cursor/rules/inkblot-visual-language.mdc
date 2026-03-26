@@ -1,6 +1,6 @@
 ---
 description: Cinematic shell UX and visual language—nav, scroll thumb, audio, bloom experiences (aligns with user screen ref)
-globs: index.html,src/ui/**/*.ts,src/main.ts,src/systems/scrollSystem.ts,src/systems/audioSystem.ts,src/systems/animationSystem.ts
+globs: index.html,src/ui/**/*.ts,src/inkblotApp.ts,src/systems/scrollSystem.ts,src/systems/audioSystem.ts,src/systems/animationSystem.ts
 alwaysApply: false
 ---
 
@@ -41,13 +41,13 @@ When the recording and this doc disagree, **trust the recording for feel** and *
 
 - **Canvas**: Fixed full-viewport, low z-index; **interaction layer** above for pointer.
 - **UI layer**: Mostly `pointer-events: none` with targeted `auto` on interactive nodes.
-- **Bloom story copy**: Scroll-synced DOM panels (`#bloom-story`, `--bloom-scroll`); hidden for `?experience=stomp` and non–bloom modes (`body` classes in `main.ts`).
+- **Bloom story copy**: Scroll-synced DOM panels (`#bloom-story`, `--bloom-scroll`); hidden for `?experience=stomp` and non–bloom modes (`body` classes in `inkblotApp.ts`).
 
 ## Citron Bloom experiences (`engines/citron-bloom/bloom-runtime/`)
 
 - **Registry**: `BloomExperienceRegistry` — add scenes with `register(id, factory)` before bloom component init.
 - **Defaults**: `flower` (delicate camera, scroll bloom, optional **dual-scene** transition to `createBloomTransitionScene`) and `stomp` (showcase orbit, iridescent stomp, glass tiles, mist) — `?experience=stomp`.
-- **Dual transition**: Distortion + parallax blend in `dualSceneBlendPass.ts`; driven from `main.ts` with `smootherstep` on scroll — **only for `flower`**, not stomp.
+- **Dual transition**: Distortion + parallax blend in `dualSceneBlendPass.ts`; driven from `inkblotApp.ts` with `smootherstep` on scroll — **only for `flower`**, not stomp.
 
 ## Showcase / “Active Theory”–style scene (`bloom-showcase/`)
 
@@ -67,10 +67,10 @@ When the recording and this doc disagree, **trust the recording for feel** and *
 | Area | Primary files |
 |------|----------------|
 | Nav + thumb + CSS vars | `index.html`, `src/ui/navChrome.ts` |
-| Scroll speed | `src/systems/scrollSystem.ts`, `src/main.ts` tick |
+| Scroll speed | `src/systems/scrollSystem.ts`, `src/inkblotApp.ts` tick |
 | Audio + playlist | `src/systems/audioSystem.ts` |
 | Camera modes | `src/systems/animationSystem.ts` |
-| Bloom routing | `src/main.ts`, `src/components/citronBloomComponent.ts` |
+| Bloom routing | `src/inkblotApp.ts`, `src/components/citronBloomComponent.ts` |
 | Engine post | `engines/citron-bloom/bloom-postprocess/citronBloomComposer.ts` |
 
 See also [citron-bloom.mdc](citron-bloom.mdc) for engine-only LOD, phases, and palette tokens.

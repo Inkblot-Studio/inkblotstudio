@@ -117,6 +117,10 @@
         pointer-events: none;
       }
 
+      #app-root {
+        display: contents;
+      }
+
       /* 3D HUD Canvas for Audio Button */
       #hud-container {
         position: fixed;
@@ -527,7 +531,7 @@
           rgba(248, 250, 252, 0.07) 0%,
           rgba(2, 6, 23, 0.72) 72%
         );
-        animation: journey-boundary-flash 0.68s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        animation: journey-boundary-flash 0.5s cubic-bezier(0.42, 0, 0.58, 1) forwards;
       }
 
       @keyframes journey-boundary-flash {
@@ -608,7 +612,7 @@
         padding: clamp(1.1rem, 4vw, 3rem);
         box-sizing: border-box;
         opacity: 0;
-        transition: opacity 0.55s ease;
+        transition: opacity 0.5s ease;
         pointer-events: none;
       }
 
@@ -1344,6 +1348,7 @@
     <div id="virtual-scroll-space"></div>
 
     <div id="canvas-container"></div>
+    <div id="app-root"></div>
 
     <div class="journey-scene-frame" id="journey-scene-frame" aria-hidden="true">
       <div class="journey-scene-frame__vignette"></div>
@@ -1570,6 +1575,6 @@
       </div>
     </div>
 
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

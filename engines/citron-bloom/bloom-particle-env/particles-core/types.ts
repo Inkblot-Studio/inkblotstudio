@@ -1,4 +1,4 @@
-import type { Color, Group, Vector3 } from 'three';
+import type { Camera, Color, Group, Vector3 } from 'three';
 import type { BloomLod } from '../../bloom-core/types';
 
 /** Handle returned by all particle environment factories. */
@@ -6,6 +6,10 @@ export interface ParticleEnvHandle {
   readonly group: Group;
   update(delta: number, elapsed: number): void;
   dispose(): void;
+  /** NDC-ish pointer (e.g. from `CitronBloomComponent`); optional wind / warp. */
+  setPointerNdc?(x: number, y: number): void;
+  /** Fade particles that get too close to the camera (screen-space “bump” shield). */
+  syncEnvCamera?(camera: Camera): void;
 }
 
 /** One particle instance placed along a spine (CPU-built once). */

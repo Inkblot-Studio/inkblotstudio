@@ -4,12 +4,15 @@ uniform float uRimPower;
 uniform float uFadeNear;
 uniform float uFadeFar;
 uniform float uAlpha;
+uniform float uCamNearFadeStart;
+uniform float uCamNearFadeEnd;
 
 varying vec3 vNormal;
 varying vec3 vView;
 varying vec4 vColor;
 varying float vAlong;
 varying float vDepth;
+varying float vCamDist;
 
 void main() {
   vec3 N = normalize(vNormal);
@@ -22,6 +25,7 @@ void main() {
   lit *= 0.82 + 0.18 * vign;
 
   float depthFade = smoothstep(uFadeFar, uFadeNear, vDepth);
-  float a = uAlpha * depthFade * (0.88 + 0.12 * rim);
+  float camShield = smoothstep(uCamNearFadeStart, uCamNearFadeEnd, vCamDist);
+  float a = uAlpha * depthFade * camShield * (0.88 + 0.12 * rim);
   gl_FragColor = vec4(lit, a);
 }

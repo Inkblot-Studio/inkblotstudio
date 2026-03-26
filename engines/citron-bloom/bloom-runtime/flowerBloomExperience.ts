@@ -3,6 +3,7 @@ import {
   createCitronBloomScene,
   type CitronBloomSceneHandle,
 } from '../examples/createCitronBloomScene';
+import { FLOWER_EXPERIENCE_ROOT_Y } from './flowerStageConstants';
 import type { BloomSceneFactoryContext, BloomExperienceScene } from './bloomExperienceTypes';
 
 /** Same curve as flower bloom: soft at top of page, most change mid–scroll. */
@@ -28,6 +29,12 @@ function wrapFlowerHandle(handle: CitronBloomSceneHandle): BloomExperienceScene 
     update(delta: number, elapsed: number) {
       handle.update(delta, elapsed);
     },
+    setPointerWorld(x: number, z: number) {
+      handle.setPointerWorld?.(x, z);
+    },
+    syncEnvCamera(camera) {
+      handle.syncEnvCamera?.(camera);
+    },
     dispose() {
       handle.dispose();
     },
@@ -45,6 +52,6 @@ function wrapFlowerHandle(handle: CitronBloomSceneHandle): BloomExperienceScene 
 
 export function createFlowerBloomExperience(ctx: BloomSceneFactoryContext): BloomExperienceScene {
   const handle = createCitronBloomScene({ lod: ctx.lod });
-  handle.root.position.set(0, -0.35, 0);
+  handle.root.position.set(0, FLOWER_EXPERIENCE_ROOT_Y, 0);
   return wrapFlowerHandle(handle);
 }

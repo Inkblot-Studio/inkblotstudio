@@ -19,5 +19,18 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three')) {
+            return 'three';
+          }
+          if (id.includes('engines/citron-bloom')) {
+            return 'citron-bloom-engine';
+          }
+          return undefined;
+        },
+      },
+    },
   },
 });

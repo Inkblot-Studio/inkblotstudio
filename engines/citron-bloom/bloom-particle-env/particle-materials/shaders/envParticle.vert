@@ -6,12 +6,16 @@ attribute float aRandom;
 uniform float uTime;
 uniform float uWind;
 uniform float uCohesion;
+uniform vec2 uPointer;
+uniform float uPointerBoost;
+uniform vec3 uCameraWorld;
 
 varying vec3 vNormal;
 varying vec3 vView;
 varying vec4 vColor;
 varying float vAlong;
 varying float vDepth;
+varying float vCamDist;
 
 void main() {
   vAlong = aAlong;
@@ -27,8 +31,14 @@ void main() {
   pos.z += curl;
   pos.y += sin(uTime * 1.1 + aPhase * 0.5) * 0.035 * uWind;
 
+  float pb = uPointerBoost * (0.55 + 0.45 * aRandom);
+  pos.x += uPointer.x * pb * 0.38 * sin(aPhase + aAlong * 3.0);
+  pos.z += uPointer.y * pb * 0.38 * cos(aPhase * 0.85 + aAlong * 2.4);
+  pos.y += (uPointer.x + uPointer.y) * pb * 0.08 * sin(aRandom * 6.28 + uTime * 0.6);
+
   mat4 im = instanceMatrix;
   vec4 worldPos = modelMatrix * im * vec4(pos, 1.0);
+  vCamDist = distance(worldPos.xyz, uCameraWorld);
   vec4 mv = viewMatrix * worldPos;
   vView = -mv.xyz;
   vDepth = length(mv.xyz);

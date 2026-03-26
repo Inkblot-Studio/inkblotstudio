@@ -7,8 +7,9 @@ const fog = new FogExp2(0x050816, 0.042);
 export function createParticleForestDemoExperience(ctx: BloomSceneFactoryContext): BloomExperienceScene {
   const env = createParticleForest({
     lod: ctx.lod,
-    treeCount: ctx.lod === 'low' ? 5 : ctx.lod === 'medium' ? 7 : 9,
+    treeCount: ctx.lod === 'low' ? 6 : ctx.lod === 'medium' ? 8 : 10,
     particleBudgetPerTree: ctx.lod === 'low' ? 900 : ctx.lod === 'medium' ? 1200 : 1500,
+    innerRadius: 1.65,
     radius: 6.5,
     seed: 7,
   });
@@ -23,6 +24,12 @@ export function createParticleForestDemoExperience(ctx: BloomSceneFactoryContext
     cameraMode: 'showcaseOrbit',
     update(delta: number, elapsed: number) {
       env.update(delta, elapsed);
+    },
+    setPointerWorld(x: number, z: number) {
+      env.setPointerNdc?.(x, z);
+    },
+    syncEnvCamera(camera) {
+      env.syncEnvCamera?.(camera);
     },
     dispose() {
       env.dispose();

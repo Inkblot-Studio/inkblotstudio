@@ -1,4 +1,4 @@
-import type { Object3D, Scene, WebGLRenderer } from 'three';
+import type { Camera, Object3D, Scene, WebGLRenderer } from 'three';
 import type { BloomLod } from '../bloom-core/types';
 
 /** Camera behaviour for a registered bloom experience (extends app AnimationSystem). */
@@ -25,6 +25,8 @@ export interface BloomExperienceScene {
   /** Direct bloom drive [0,1] — used by scroll journey (opening/closing curves applied by caller). */
   applyBloomDrive?(drive01: number): void;
   setPointerWorld?(x: number, z: number): void;
+  /** Sync main camera for env shaders (e.g. particle camera shield). */
+  syncEnvCamera?(camera: Camera): void;
 }
 
 export type BloomSceneFactory = (ctx: BloomSceneFactoryContext) => BloomExperienceScene;

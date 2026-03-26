@@ -1,5 +1,6 @@
 import {
   BufferGeometry,
+  Camera,
   CircleGeometry,
   Color,
   DoubleSide,
@@ -15,6 +16,7 @@ import { createEnvParticleMaterial, type EnvParticleMaterialOptions } from '../p
 import type { EnvParticleSample } from './types';
 
 const _dummy = new Object3D();
+const _camWorld = new Vector3();
 const _tangent = new Vector3();
 const _up = new Vector3(0, 1, 0);
 const _axis = new Vector3();
@@ -38,6 +40,7 @@ export function createInstancedParticleCloud(
   readonly mesh: InstancedMesh;
   readonly material: ShaderMaterial;
   update: (delta: number, elapsed: number) => void;
+  syncCamera: (camera: Camera) => void;
   dispose: () => void;
 } {
   const count = samples.length;
@@ -103,6 +106,10 @@ export function createInstancedParticleCloud(
     material,
     update(_delta: number, elapsed: number) {
       material.uniforms.uTime.value = elapsed;
+    },
+    syncCamera(camera: Camera) {
+      camera.getWorldPosition(_camWorld);
+      material.uniforms.uCameraWorld.value.copy(_camWorld);
     },
     dispose() {
       geo.dispose();

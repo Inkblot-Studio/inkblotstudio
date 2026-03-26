@@ -39,8 +39,16 @@ export class InkblotCamera {
   /** Smoothing factor — higher = snappier, lower = more cinematic. */
   private dampFactor = 3;
 
+  /** When set, camera world Y is clamped after damping (flower journey ground plane). */
+  private worldPositionMinY: number | null = null;
+
   setDampFactor(value: number): void {
     this.dampFactor = value;
+  }
+
+  /** Pass `null` to disable. Used to keep the lens above the hero ground except during transitions. */
+  setWorldPositionMinY(y: number | null): void {
+    this.worldPositionMinY = y;
   }
 
   constructor(config: CameraConfig = {}) {
@@ -77,6 +85,12 @@ export class InkblotCamera {
     cam.position.x = damp(cam.position.x, this.targetPosition.x, this.dampFactor, delta);
     cam.position.y = damp(cam.position.y, this.targetPosition.y, this.dampFactor, delta);
     cam.position.z = damp(cam.position.z, this.targetPosition.z, this.dampFactor, delta);
+
+    const floor = this.worldPositionMinY;
+    if (floor !== null && cam.position.y < floor) {
+      cam.position.y = floor;
+      this.targetPosition.y = Math.max(this.targetPosition.y, floor);
+    }
 
     cam.lookAt(this.targetLookAt);
   }

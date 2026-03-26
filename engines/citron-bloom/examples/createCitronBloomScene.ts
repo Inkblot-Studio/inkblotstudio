@@ -1,13 +1,17 @@
+import type { Camera } from 'three';
 import { Group, Vector3 } from 'three';
 import { BLOOM_LOD_PROFILES, type BloomLod } from '../bloom-core/types';
 import { dnaHelixPoints, catmullFromPoints } from '../bloom-curves/curveUtils';
 import { createDnaSpineMesh, disposeDnaSpine, updateDnaSpineTime } from '../bloom-curves/dnaSpine';
 import { InstancedMicroLeaves } from '../bloom-core/instancedMicroLeaves';
 import { BloomPhaseController } from '../bloom-flora/bloomPhase';
+import { createFlowerFogMistParticles } from '../bloom-flora/createFlowerFogMistParticles';
 import { FloralAssembly } from '../bloom-flora/floralAssembly';
 
 export interface CreateCitronBloomSceneOptions {
   lod?: BloomLod;
+  /** Static mist particles near “ground” level — no solid mesh (default true). */
+  enableGroundMist?: boolean;
 }
 
 export interface CitronBloomSceneHandle {
@@ -15,16 +19,24 @@ export interface CitronBloomSceneHandle {
   update(delta: number, elapsed: number): void;
   /** Drive flower opening: 0 = buds, 1 = full bloom (smoothly animated). */
   setBloomTarget(main: number, branch?: number, bud?: number): void;
+  setPointerWorld?(x: number, z: number): void;
+  syncEnvCamera?(camera: Camera): void;
   dispose(): void;
 }
 
 /**
- * Wires DNA spines, micro-leaves, and multi-head floral assembly (no floating dust particles).
- * Add `root` to your scene; tick `update` each frame.
+ * DNA spines, micro-leaves, floral assembly, and optional static fog-mist specks (no solid ground).
  */
 export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): CitronBloomSceneHandle {
-  const profile = BLOOM_LOD_PROFILES[options.lod ?? 'high'];
+  const lod = options.lod ?? 'high';
+  const profile = BLOOM_LOD_PROFILES[lod];
   const root = new Group();
+
+  const enableMist = options.enableGroundMist !== false;
+  const fogMist = enableMist ? createFlowerFogMistParticles(lod) : null;
+  if (fogMist) {
+    root.add(fogMist.group);
+  }
 
   const h1 = dnaHelixPoints(2.8, 0.22, 1.35, profile.spineTubularSegments, 0);
   const h2 = dnaHelixPoints(2.8, 0.22, 1.35, profile.spineTubularSegments, Math.PI);
@@ -64,7 +76,6 @@ export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): 
   });
   root.add(leaves.mesh);
 
-  // Very slow follow — scroll-mapped bloom feels languid and continuous.
   const phaseMain = new BloomPhaseController({ smoothSpeed: 0.15, pulseSpeed: 0.38 });
   const phaseBranch = new BloomPhaseController({ smoothSpeed: 0.14, pulseSpeed: 0.34 });
   const phaseBud = new BloomPhaseController({ smoothSpeed: 0.13, pulseSpeed: 0.32 });
@@ -88,6 +99,7 @@ export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): 
       updateDnaSpineTime(spineA, elapsed, wind.value);
       updateDnaSpineTime(spineB, elapsed, wind.value);
       leaves.update(elapsed);
+      fogMist?.update(elapsed);
     },
     setBloomTarget(main: number, branch = main * 0.85, bud = main * 0.4) {
       phaseMain.setTarget(main);
@@ -95,6 +107,7 @@ export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): 
       phaseBud.setTarget(bud);
     },
     dispose() {
+      fogMist?.dispose();
       disposeDnaSpine(spineA);
       disposeDnaSpine(spineB);
       leaves.dispose();

@@ -1,3 +1,4 @@
+import type { Camera } from 'three';
 import { Group, Vector3 } from 'three';
 import { catmullFromPoints, dnaHelixPoints } from '../../bloom-curves/curveUtils';
 import type { BloomLod } from '../../bloom-core/types';
@@ -57,6 +58,8 @@ export function createParticleFlow(config: ParticleFlowConfig = {}): ParticleEnv
     coreColor: BloomTokens.citron700,
     rimColor: BloomTokens.citron300,
     rimPower: 2.5,
+    camNearFadeStart: 0.2,
+    camNearFadeEnd: 0.95,
   });
 
   const group = new Group();
@@ -67,6 +70,9 @@ export function createParticleFlow(config: ParticleFlowConfig = {}): ParticleEnv
     group,
     update(delta: number, elapsed: number) {
       cloud.update(delta, elapsed);
+    },
+    syncEnvCamera(camera: Camera) {
+      cloud.syncCamera(camera);
     },
     dispose() {
       cloud.dispose();

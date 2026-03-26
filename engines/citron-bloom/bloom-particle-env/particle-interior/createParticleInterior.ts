@@ -1,3 +1,4 @@
+import type { Camera } from 'three';
 import { Color, Group, Vector3 } from 'three';
 import { catmullFromPoints } from '../../bloom-curves/curveUtils';
 import type { BloomLod } from '../../bloom-core/types';
@@ -101,6 +102,8 @@ export function createParticleInterior(config: ParticleInteriorConfig = {}): Par
     alpha: 0.88,
     coreColor: BloomTokens.citron700,
     rimColor: BloomTokens.citron300,
+    camNearFadeStart: 0.22,
+    camNearFadeEnd: 0.98,
   });
 
   const group = new Group();
@@ -111,6 +114,9 @@ export function createParticleInterior(config: ParticleInteriorConfig = {}): Par
     group,
     update(delta: number, elapsed: number) {
       cloud.update(delta, elapsed);
+    },
+    syncEnvCamera(camera: Camera) {
+      cloud.syncCamera(camera);
     },
     dispose() {
       cloud.dispose();

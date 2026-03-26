@@ -16,7 +16,6 @@ import {
 } from 'three';
 import type { Camera } from 'three';
 import { Text } from 'troika-three-text';
-import { createParticleMist } from '../bloom-showcase/particleMist';
 
 const IBM_PLEX_MONO =
   'https://fonts.gstatic.com/s/ibmplexmono/v19/jMAS9GvGsKxCA-WtwUKzsL_jdstr.woff2';
@@ -58,7 +57,7 @@ function makeLabel(
 export function createBloomTransitionScene(): BloomTransitionSceneHandle {
   const scene = new Scene();
   scene.background = new Color(0x03050c);
-  scene.fog = new FogExp2(0x050812, 0.038);
+  scene.fog = new FogExp2(0x050812, 0.016);
 
   const ambient = new AmbientLight(0x6a5acd, 0.28);
   scene.add(ambient);
@@ -124,24 +123,6 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
     spine.add(mesh);
   }
   scene.add(spine);
-
-  /* --- Spectrum particle fields --- */
-  const mistA = createParticleMist(
-    1600,
-    new Color(0xff00aa),
-    new Color(0x00ffea),
-  );
-  mistA.points.position.set(0, 0.4, 0);
-  scene.add(mistA.points);
-
-  const mistB = createParticleMist(
-    900,
-    new Color(0xffee00),
-    new Color(0xaa66ff),
-  );
-  mistB.points.position.set(0.15, -0.2, -0.35);
-  mistB.points.scale.setScalar(0.92);
-  scene.add(mistB.points);
 
   /* --- Floating glass “work” card --- */
   const cardGroup = new Group();
@@ -221,8 +202,6 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
 
     update(elapsed: number, camera: Camera) {
       spine.rotation.y = elapsed * 0.065;
-      mistA.update(elapsed);
-      mistB.update(elapsed * 1.08);
 
       cardGroup.position.y = 0.42 + Math.sin(elapsed * 0.62) * 0.045;
       cardGroup.rotation.z = 0.04 + Math.sin(elapsed * 0.35) * 0.018;
@@ -240,9 +219,6 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
     },
 
     dispose() {
-      mistA.dispose();
-      mistB.dispose();
-
       cardTitle.dispose();
       cardSub.dispose();
       menuHeader.dispose();
