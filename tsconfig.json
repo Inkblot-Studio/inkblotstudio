@@ -15,10 +15,19 @@
     "declarationMap": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "jsx": "react-jsx",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@citron-bloom-engine": ["engines/citron-bloom"],
+      "@citron-bloom-engine/*": ["engines/citron-bloom/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "engines/**/*.ts",
+    "engines/**/*.tsx",
+    "engines/**/*.d.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

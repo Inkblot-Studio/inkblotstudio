@@ -6,17 +6,19 @@
     <title>Inkblot Studio | Cinematic Visual Experience</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
       :root {
+        --dominant: #2563EB;
+        --support: #60A5FA;
         --primary: #2563EB;
         --primary-hover: #60A5FA;
         --accent: #10B981;
         --background: #020617;
-        --surface: rgba(11, 18, 32, 0.4);
+        --surface: #0B1220;
         --text-primary: #F8FAFC;
         --text-muted: #CBD5E1;
-        --border: rgba(255, 255, 255, 0.05);
+        --border: #1E293B;
       }
 
       *, *::before, *::after {
@@ -40,7 +42,15 @@
         position: fixed;
         inset: 0;
         z-index: 1;
-        pointer-events: none; /* Let pointer events pass through to interaction layer if needed, or catch them here */
+        pointer-events: none;
+      }
+
+      /* 3D HUD Canvas for Audio Button */
+      #hud-container {
+        position: fixed;
+        inset: 0;
+        z-index: 6;
+        pointer-events: none;
       }
 
       /* Capture mouse for the 3D scene globally */
@@ -51,12 +61,24 @@
         pointer-events: auto;
       }
 
+      /* Citron Bloom engine HUD (React + Citron UI) */
+      #citron-bloom-hud {
+        position: fixed;
+        inset: 0;
+        z-index: 25;
+        pointer-events: none;
+      }
+
+      #citron-bloom-hud > * {
+        pointer-events: auto;
+      }
+
       /* UI Overlay on top */
       #ui-layer {
         position: fixed;
         inset: 0;
         z-index: 10;
-        pointer-events: none; /* Only specific elements should be clickable */
+        pointer-events: none;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -82,110 +104,91 @@
         width: auto;
       }
 
-      .logo-container span {
-        font-family: 'Cormorant Garamond', serif;
+      .logo-text {
+        display: flex;
+        align-items: baseline;
+        gap: 0.3rem;
+      }
+
+      .logo-text .inkblot {
+        font-family: 'Cinzel', serif;
         font-weight: 600;
         letter-spacing: 0.05em;
         font-size: 1.4rem;
         text-transform: uppercase;
       }
 
+      .logo-text .studio {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 300;
+        letter-spacing: 0.1em;
+        font-size: 1.0rem;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+
+      .logo-text .tm {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.6rem;
+        opacity: 0.5;
+        transform: translateY(-0.5rem);
+      }
+
+      /* Desktop Nav */
       nav {
         display: flex;
-        gap: 2rem;
+        gap: 2.5rem;
       }
 
       nav a {
         color: var(--text-primary);
         text-decoration: none;
-        font-size: 0.9rem;
-        font-weight: 500;
-        letter-spacing: 0.05em;
+        font-size: 0.85rem;
+        font-weight: 400;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
-        opacity: 0.7;
+        opacity: 0.6;
         transition: opacity 0.3s ease, color 0.3s ease;
       }
 
       nav a:hover {
         opacity: 1;
-        color: var(--primary-hover);
+        color: var(--support);
       }
 
-      /* Bottom Controls */
-      footer {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        pointer-events: auto;
-      }
-
-      .audio-btn {
-        background: var(--surface);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--border);
-        color: var(--text-primary);
-        padding: 0.75rem 1.5rem;
-        border-radius: 30px;
-        font-family: inherit;
-        font-size: 0.85rem;
-        font-weight: 500;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+      /* Mobile Nav Toggle */
+      .menu-toggle {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        background: none;
+        border: none;
         cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        z-index: 20;
       }
 
-      .audio-btn:hover {
-        border-color: rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.05);
-      }
-
-      .audio-indicator {
-        display: flex;
-        gap: 2px;
-        height: 12px;
-        align-items: flex-end;
-      }
-
-      .audio-bar {
-        width: 2px;
-        background-color: currentColor;
+      .menu-toggle span {
+        width: 24px;
         height: 2px;
-        transition: height 0.1s ease;
+        background-color: var(--text-primary);
+        transition: 0.3s;
       }
 
-      .audio-btn.playing .audio-bar {
-        animation: eq 1s ease-in-out infinite alternate;
-      }
-      .audio-btn.playing .audio-bar:nth-child(1) { animation-delay: 0.0s; }
-      .audio-btn.playing .audio-bar:nth-child(2) { animation-delay: 0.2s; }
-      .audio-btn.playing .audio-bar:nth-child(3) { animation-delay: 0.4s; }
-      .audio-btn.playing .audio-bar:nth-child(4) { animation-delay: 0.1s; }
-
-      @keyframes eq {
-        0% { height: 2px; }
-        50% { height: 12px; }
-        100% { height: 2px; }
-      }
-
-      /* Optional custom scroll for virtual scrolling if needed */
+      /* Virtual scroll */
       #virtual-scroll-space {
         position: absolute;
         top: 0;
         left: 0;
         width: 1px;
-        height: 400vh; /* creates 4 screens of scrolling for blooming effect */
+        height: 500vh;
         pointer-events: none;
         z-index: 0;
       }
 
       @media (max-width: 768px) {
         #ui-layer { padding: 1.5rem; }
-        nav { display: none; } /* Hide text nav on mobile for cleaner look */
+        nav { display: none; }
+        .menu-toggle { display: flex; }
       }
     </style>
   </head>
@@ -194,32 +197,34 @@
     <div id="virtual-scroll-space"></div>
 
     <div id="canvas-container"></div>
+    <div id="hud-container"></div>
     <div id="interaction-layer"></div>
     
+    <div id="citron-bloom-hud"></div>
+
     <div id="ui-layer">
       <header>
         <div class="logo-container">
           <img src="/inkblotstudio_logo.svg" alt="Inkblot Studio Logo">
-          <span>INKBLOT STUDIO</span>
+          <div class="logo-text">
+            <span class="inkblot">Inkblot</span>
+            <span class="studio">Studio</span>
+            <span class="tm">™</span>
+          </div>
         </div>
+        
         <nav>
           <a href="#">Showcase</a>
           <a href="#">Products</a>
           <a href="#">Contact</a>
         </nav>
-      </header>
 
-      <footer>
-        <button id="audio-toggle" class="audio-btn">
-          <span>Audio: Off</span>
-          <div class="audio-indicator">
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-          </div>
+        <button class="menu-toggle" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
         </button>
-      </footer>
+      </header>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

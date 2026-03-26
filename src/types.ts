@@ -2,6 +2,8 @@ import type { Camera, Scene, WebGLRenderer } from 'three';
 
 /** Hex color values used across the scene — mirrors the design palette. */
 export interface ColorPalette {
+  readonly dominant: number;
+  readonly support: number;
   readonly primary: number;
   readonly primaryHover: number;
   readonly accent: number;

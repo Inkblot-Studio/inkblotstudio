@@ -3,9 +3,8 @@ import { damp } from '@/utils/math';
 
 /**
  * Audio System.
- * Generates an ambient, cinematic drone using Web Audio API oscillators,
- * so we don't need external assets. Also performs real-time frequency analysis
- * to drive shader parameters (audio-reactive visuals).
+ * Generates an ambient, cinematic drone using Web Audio API oscillators.
+ * Exposes frequency data and a toggle method for 3D UI integration.
  */
 export class AudioSystem implements ISystem {
   private audioCtx: AudioContext | null = null;
@@ -15,7 +14,8 @@ export class AudioSystem implements ISystem {
 
   private dataArray: Uint8Array | null = null;
   private initialized = false;
-  private isPlaying = false;
+  
+  public isPlaying = false;
 
   /** Smoothed overall volume level [0, 1] derived from low frequencies. */
   public lowFrequencyVolume = 0;
@@ -23,16 +23,8 @@ export class AudioSystem implements ISystem {
   /** Smoothed overall volume level [0, 1] derived from high frequencies. */
   public highFrequencyVolume = 0;
 
-  private btnElement: HTMLElement | null = null;
-  private textElement: HTMLElement | null = null;
-
   init(_ctx: FrameContext): void {
-    this.btnElement = document.getElementById('audio-toggle');
-    this.textElement = this.btnElement?.querySelector('span') || null;
-
-    if (this.btnElement) {
-      this.btnElement.addEventListener('click', this.toggleAudio);
-    }
+    // No HTML binding anymore; triggered by 3D HUD clicks
   }
 
   private async initAudio(): Promise<void> {
@@ -67,19 +59,15 @@ export class AudioSystem implements ISystem {
       const filter = this.audioCtx.createBiquadFilter();
       const gain = this.audioCtx.createGain();
 
-      // Slightly detune to create beating / chorusing effect
       osc.type = index % 2 === 0 ? 'sine' : 'triangle';
       osc.frequency.value = freq + (Math.random() - 0.5) * 1.0; 
 
-      // Panning wide
       panner.pan.value = (Math.random() - 0.5) * 1.5;
 
-      // Lowpass filter for deep cinematic feel
       filter.type = 'lowpass';
       filter.frequency.value = 200 + Math.random() * 200;
       filter.Q.value = 1;
 
-      // Lower gain for higher pitches
       gain.gain.value = 1.0 / (index + 1);
 
       osc.connect(filter);
@@ -94,7 +82,7 @@ export class AudioSystem implements ISystem {
     this.initialized = true;
   }
 
-  private toggleAudio = async (): Promise<void> => {
+  public toggleAudio = async (): Promise<void> => {
     if (!this.initialized) {
       await this.initAudio();
     }
@@ -107,25 +95,19 @@ export class AudioSystem implements ISystem {
 
     this.isPlaying = !this.isPlaying;
 
-    // Fade in / out
     const now = this.audioCtx.currentTime;
     this.masterGain.gain.cancelScheduledValues(now);
     
     if (this.isPlaying) {
       this.masterGain.gain.linearRampToValueAtTime(1.0, now + 2.0);
-      if (this.btnElement) this.btnElement.classList.add('playing');
-      if (this.textElement) this.textElement.innerText = 'Audio: On';
     } else {
       this.masterGain.gain.linearRampToValueAtTime(0.01, now + 1.0);
       this.masterGain.gain.setValueAtTime(0, now + 1.1);
-      if (this.btnElement) this.btnElement.classList.remove('playing');
-      if (this.textElement) this.textElement.innerText = 'Audio: Off';
     }
   };
 
   update(ctx: FrameContext): void {
     if (!this.analyser || !this.dataArray || !this.isPlaying) {
-      // Decay visual volumes if audio is off
       this.lowFrequencyVolume = damp(this.lowFrequencyVolume, 0, 5, ctx.delta);
       this.highFrequencyVolume = damp(this.highFrequencyVolume, 0, 5, ctx.delta);
       return;
@@ -133,7 +115,6 @@ export class AudioSystem implements ISystem {
 
     this.analyser.getByteFrequencyData(this.dataArray as any);
 
-    // Calculate average for low frequencies (bins 0-10)
     let lowSum = 0;
     const lowCount = 10;
     for (let i = 0; i < lowCount; i++) {
@@ -141,7 +122,6 @@ export class AudioSystem implements ISystem {
     }
     const targetLow = (lowSum / lowCount) / 255.0;
 
-    // Calculate average for high frequencies (bins 30-50)
     let highSum = 0;
     const highCount = 20;
     for (let i = 30; i < 30 + highCount; i++) {
@@ -149,15 +129,11 @@ export class AudioSystem implements ISystem {
     }
     const targetHigh = (highSum / highCount) / 255.0;
 
-    // Smooth values to prevent jitter
     this.lowFrequencyVolume = damp(this.lowFrequencyVolume, targetLow, 10, ctx.delta);
     this.highFrequencyVolume = damp(this.highFrequencyVolume, targetHigh, 10, ctx.delta);
   }
 
   dispose(): void {
-    if (this.btnElement) {
-      this.btnElement.removeEventListener('click', this.toggleAudio);
-    }
     this.oscillators.forEach(osc => osc.stop());
     if (this.audioCtx) {
       this.audioCtx.close();

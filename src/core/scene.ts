@@ -1,6 +1,5 @@
 import {
   Scene,
-  Color,
   DirectionalLight,
   PointLight,
   Mesh,
@@ -42,8 +41,8 @@ export class InkblotScene {
     // Soft radial vignette shader
     const material = new ShaderMaterial({
       uniforms: {
-        color1: { value: new Color('#0b1220') }, // Center
-        color2: { value: new Color('#020617') }, // Edges
+        color1: { value: COLORS.surface.clone() },
+        color2: { value: COLORS.background.clone() },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -75,19 +74,19 @@ export class InkblotScene {
   // ── Cinematic Lighting ───────────────────────────────────────────────────
 
   private setupLights(): void {
-    // 1. Fill Light — Bright, cool blue (#2563EB) coming from front-top-left
-    const fillLight = new DirectionalLight(PALETTE.primary, 8.0);
+    // 1. Fill Light — dominant blue from front-top-left
+    const fillLight = new DirectionalLight(PALETTE.dominant, 8.0);
     fillLight.position.set(-5, 5, 10);
     this.instance.add(fillLight);
 
     // 1b. Front Key Light - Bright white/blue from front-right
     // Reduced intensity so it doesn't blow out the bloom
-    const frontKey = new DirectionalLight(0xffffff, 8.0);
+    const frontKey = new DirectionalLight(PALETTE.textPrimary, 5.5);
     frontKey.position.set(5, 5, 10);
     this.instance.add(frontKey);
 
-    // 2. Rim Light — Sharp, high-intensity hover blue (#60A5FA) from the back-right
-    const rimLight = new DirectionalLight(PALETTE.primaryHover, 15.0);
+    // 2. Rim Light — support / primary-hover blue from the back-right
+    const rimLight = new DirectionalLight(PALETTE.support, 15.0);
     rimLight.position.set(5, 2, -10);
     this.instance.add(rimLight);
 

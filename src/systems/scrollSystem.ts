@@ -44,6 +44,7 @@ export class ScrollSystem implements ISystem {
     const maxScroll = Math.max(docHeight - winHeight, 1);
     
     const scrollY = window.scrollY || window.pageYOffset;
+    
     this.targetProgress = clamp(scrollY / maxScroll, 0, 1);
   };
 }
