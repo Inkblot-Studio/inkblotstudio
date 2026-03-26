@@ -119,6 +119,12 @@ export function createGlassLogoHero(): GlassLogoHeroHandle {
   column.rotation.set(0, 0, 0);
   group.add(column);
 
+  /** Torus must match `TorusGeometry(major, tube, …)` — used to size slabs for the hole. */
+  const torusMajor = 1.3392;
+  const torusTube = 0.08208;
+  const torusHoleRadius = torusMajor - torusTube;
+  const holeMargin = 0.1188;
+
   const template = new ExtrudeGeometry(inkblotTriangleShape(W, H), extrudeOpts);
   template.computeBoundingBox();
   const bb = template.boundingBox!;
@@ -127,7 +133,16 @@ export function createGlassLogoHero(): GlassLogoHeroHandle {
   const bbN = template.boundingBox!;
   const triWidth = bbN.max.x;
   const triHeight = bbN.max.y;
+  const midX = triWidth * 0.5;
+  const zHalf = Math.max(Math.abs(bbN.min.z), Math.abs(bbN.max.z));
+  /** Max distance from stack Y axis in XZ (slabs centered on x = midX before column offset). */
+  const slabClearRadius = Math.hypot(midX, zHalf);
+  const logoFitScale = Math.min(
+    1,
+    (torusHoleRadius - holeMargin) / Math.max(slabClearRadius, 1e-4),
+  );
 
+  const slabStack = new Group();
   for (let i = 0; i < SLAB_COUNT; i++) {
     const geo = template.clone();
     const mesh = new Mesh(geo, mat.clone());
@@ -139,16 +154,25 @@ export function createGlassLogoHero(): GlassLogoHeroHandle {
     } else {
       mesh.position.set(0, y, 0);
     }
-    column.add(mesh);
+    slabStack.add(mesh);
   }
   template.dispose();
 
-  const midX = triWidth * 0.5;
-  column.position.set(-midX, (3 * pitch - triHeight) / 2, 0);
+  slabStack.scale.setScalar(logoFitScale);
+  /** Camera at +Z: −X is screen-left; shift glass vs torus (torus stays centered). */
+  slabStack.position.x = -0.64 * triWidth * logoFitScale;
+  column.add(slabStack);
 
-  const torus = new Mesh(new TorusGeometry(0.62, 0.038, 26, 128), mat.clone());
-  torus.rotation.set(Math.PI / 2, 0, 0);
-  torus.position.set(0, (triHeight - 3 * pitch) / 2, 0.025);
+  column.position.set(
+    -midX * logoFitScale,
+    (logoFitScale * (3 * pitch - triHeight)) / 2,
+    0,
+  );
+
+  /** Default torus lies in XY; hole faces ±Z. Camera in hero (section 1) is at +Z, so the ring reads face-on around the Y stack — not edge-on (that was rotation.x = π/2 → XZ plane). */
+  const torus = new Mesh(new TorusGeometry(torusMajor, torusTube, 26, 128), mat.clone());
+  torus.rotation.set(0, 0, 0);
+  torus.position.set(0, (logoFitScale * (triHeight - 3 * pitch)) / 2, 0.025);
   column.add(torus);
 
   group.scale.setScalar(1.38);
