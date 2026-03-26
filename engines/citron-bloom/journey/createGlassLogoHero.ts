@@ -86,8 +86,13 @@ export function createGlassLogoHero(): GlassLogoHeroHandle {
 
   const W = 0.56;
   const H = 0.56;
-  const gap = 0.044;
-  const pitch = H + gap;
+  /**
+   * Vertical step between slabs: use shape height `H`, not bbox `triHeight`.
+   * Bevel inflates the mesh bbox upward, so triHeight-based pitch leaves large
+   * visible gaps between the glass faces; H + gap matches the inkblot leg length.
+   */
+  const verticalGap = -0.08;
+  const pitch = H + verticalGap;
 
   const key = new PointLight(0xffffff, 56, 30, 1.6);
   key.position.set(3.6, 1.2, 6.4);
@@ -121,6 +126,7 @@ export function createGlassLogoHero(): GlassLogoHeroHandle {
   template.computeBoundingBox();
   const bbN = template.boundingBox!;
   const triWidth = bbN.max.x;
+  const triHeight = bbN.max.y;
 
   for (let i = 0; i < SLAB_COUNT; i++) {
     const geo = template.clone();
@@ -138,11 +144,11 @@ export function createGlassLogoHero(): GlassLogoHeroHandle {
   template.dispose();
 
   const midX = triWidth * 0.5;
-  column.position.set(-midX, (3 * pitch - H) / 2, 0);
+  column.position.set(-midX, (3 * pitch - triHeight) / 2, 0);
 
   const torus = new Mesh(new TorusGeometry(0.62, 0.038, 26, 128), mat.clone());
   torus.rotation.set(Math.PI / 2, 0, 0);
-  torus.position.set(0, (H - 3 * pitch) / 2, 0.025);
+  torus.position.set(0, (triHeight - 3 * pitch) / 2, 0.025);
   column.add(torus);
 
   group.scale.setScalar(1.38);

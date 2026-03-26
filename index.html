@@ -703,6 +703,9 @@
       }
 
       .journey-hero__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65em;
         font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
         font-size: clamp(0.68rem, 1.15vw, 0.8rem);
         line-height: 1.65;
@@ -712,6 +715,10 @@
         justify-self: end;
         border-left: 1px solid color-mix(in srgb, #a78bfa 35%, transparent);
         padding-left: clamp(0.85rem, 2vw, 1.2rem);
+      }
+
+      .journey-hero__body p {
+        margin: 0;
       }
 
       @media (max-width: 899px) {
@@ -1420,14 +1427,15 @@
             <span class="journey-hero__studio">Inkblot Studio</span>
             <h1 class="journey-hero__title">
               <span class="journey-hero__title-line">Custom AI systems</span>
-              <span class="journey-hero__title-line">Research to product</span>
-              <span class="journey-hero__title-line">Local &amp; secure</span>
+              <span class="journey-hero__title-line">Built for your business</span>
             </h1>
-            <p class="journey-hero__tagline">Accelerating Every Industry through AI</p>
+            <p class="journey-hero__tagline">Secure. Scalable. Production-ready.</p>
           </div>
-          <p class="journey-hero__body">
-            We stay at the edge of the AI field: we research and build custom systems that mature into products. Work runs on our own local compute—private and secure. Citron is our evolving suite of business tools (think creative cloud for operators). We partner B2B to ship, maintain, and scale, with prompt-style workflows that tame complex systems without dumbing them down.
-          </p>
+          <div class="journey-hero__body">
+            <p>We design and build custom AI systems for businesses.</p>
+            <p>From initial research to full deployment, everything runs on secure, private infrastructure.</p>
+            <p>Each system is built to solve a specific problem and scale with your operations.</p>
+          </div>
         </div>
       </section>
 
