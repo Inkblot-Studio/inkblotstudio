@@ -1,0 +1,18 @@
+{
+  "name": "@citron-systems/citron-bloom-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "description": "Citron Bloom — Three.js real-time flora, particle environments, and post stack (engine-only sources; consumed via path alias from the Inkblot monorepo).",
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "three": "^0.172.0",
+    "troika-three-text": "^0.52.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}

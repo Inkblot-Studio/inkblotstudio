@@ -149,6 +149,13 @@ export class FloralAssembly extends Group {
     }
   }
 
+  /** Ground ripple shimmer on instanced petals (aggregate signal from mist). */
+  setRippleShimmer(phase: number, strength: number): void {
+    for (const f of this.flowers) {
+      f.setRippleShimmer(phase, strength);
+    }
+  }
+
   dispose(): void {
     for (const s of this.stems) disposeDnaSpine(s);
     for (const f of this.flowers) f.dispose();

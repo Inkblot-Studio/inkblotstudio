@@ -3,11 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Inkblot Studio — immersive WebGL journey, glass flora, and production engineering. Scroll-driven 3D; optional chat navigation."
+    />
     <title>Inkblot Studio | Cinematic Visual Experience</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       :root {
         --scroll-raw: 0;
@@ -16,6 +20,8 @@
         --journey-hero-ui: 0;
         --journey-edge: 0;
         --journey-rail: #7dd3fc;
+        --at-neon-flicker: 1;
+        --at-neon-pulse: 0.45;
         --dominant: #2563EB;
         --support: #60A5FA;
         --primary: #2563EB;
@@ -583,7 +589,10 @@
           color-mix(in srgb, var(--journey-rail) 75%, transparent) 78%,
           transparent 100%
         );
-        opacity: calc(0.38 + var(--journey-edge, 0) * 0.55);
+        opacity: calc((0.38 + var(--journey-edge, 0) * 0.55) * var(--at-neon-flicker, 1));
+        box-shadow:
+          0 0 calc(10px * var(--at-neon-flicker, 1))
+            color-mix(in srgb, var(--journey-rail) calc(55% * var(--at-neon-pulse, 0.45)), transparent);
         transition: opacity 0.15s ease-out;
       }
 
@@ -831,6 +840,19 @@
         outline-offset: 2px;
       }
 
+      .journey-chat__reply {
+        font-family: 'Syne', 'Outfit', system-ui, sans-serif;
+        font-size: 0.72rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        line-height: 1.45;
+        color: color-mix(in srgb, #a5f3fc 78%, var(--text-muted));
+        min-height: 1.35em;
+        text-shadow:
+          0 0 calc(12px * var(--at-neon-pulse, 0.45))
+            color-mix(in srgb, #67e8f9 40%, transparent);
+      }
+
       .journey-caption {
         font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
         font-size: clamp(0.62rem, 1.05vw, 0.74rem);
@@ -1010,7 +1032,19 @@
           color-mix(in srgb, var(--scene-accent, #7dd3fc) 70%, transparent),
           color-mix(in srgb, var(--scene-accent, #7dd3fc) 15%, transparent)
         );
-        opacity: 0.85;
+        opacity: calc(0.82 * var(--at-neon-flicker, 1));
+      }
+
+      body.citron-bloom-mode .bloom-scene__rail {
+        box-shadow:
+          0 0 calc(14px * var(--at-neon-flicker, 1))
+            color-mix(
+              in srgb,
+              var(--scene-accent, #7dd3fc) calc(50% * var(--at-neon-pulse, 0.45)),
+              transparent
+            ),
+          0 0 calc(28px * var(--at-neon-pulse, 0.45))
+            color-mix(in srgb, var(--scene-accent, #7dd3fc) 22%, transparent);
       }
 
       .bloom-panel:nth-child(even) .bloom-scene__rail {
@@ -1022,10 +1056,10 @@
       }
 
       .bloom-scene__meta {
-        font-family: 'Fraunces', Georgia, serif;
+        font-family: 'Syne', 'Fraunces', Georgia, serif;
         font-size: clamp(0.72rem, 1.35vw, 0.88rem);
-        font-weight: 400;
-        letter-spacing: 0.28em;
+        font-weight: 500;
+        letter-spacing: 0.22em;
         text-transform: uppercase;
         color: color-mix(in srgb, var(--scene-accent, #7dd3fc) 75%, var(--text-muted));
         display: flex;
@@ -1467,6 +1501,7 @@
               />
               <button type="submit">Send</button>
             </div>
+            <p id="journey-chat-reply" class="journey-chat__reply" aria-live="polite"></p>
           </form>
         </div>
       </section>

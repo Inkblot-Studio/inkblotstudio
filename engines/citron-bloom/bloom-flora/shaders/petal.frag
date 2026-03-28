@@ -4,6 +4,8 @@ uniform float uRimPower;
 uniform float uBloom;
 uniform vec3 uAccentGlow;
 uniform float uTime;
+uniform float uRipplePhase;
+uniform float uRippleStrength;
 
 varying vec3 vNormal;
 varying vec3 vView;
@@ -82,6 +84,9 @@ void main() {
   col += caustCol;
   col += irid;
   col += uAccentGlow * bb * 0.12 * (0.3 + 0.7 * vTip) * (1.0 - ndv);
+
+  float rip = uRippleStrength * sin(uRipplePhase + ndv * 7.0 + rim * 4.0);
+  col += uAccentGlow * max(0.0, rip) * 0.052 * (0.45 + 0.55 * rim) * (0.55 + 0.45 * bb);
 
   float alpha = mix(0.28, 0.94, fresnel);
   alpha = mix(alpha, min(alpha + 0.06, 1.0), bb * 0.35);

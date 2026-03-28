@@ -66,6 +66,8 @@ export class ProceduralFlower extends Group {
         uDeepColor: { value: BloomTokens.citron700.clone().lerp(new Color(0x0a1628), 0.5) },
         uRimPower: { value: 2.35 },
         uAccentGlow: { value: BloomTokens.success.clone().lerp(BloomTokens.citron300, 0.25) },
+        uRipplePhase: { value: 0 },
+        uRippleStrength: { value: 0 },
       },
       transparent: true,
       depthWrite: true,
@@ -180,6 +182,11 @@ export class ProceduralFlower extends Group {
 
   setWind(w: number): void {
     this.petalMaterial.uniforms.uWind.value = w;
+  }
+
+  setRippleShimmer(phase: number, strength: number): void {
+    this.petalMaterial.uniforms.uRipplePhase.value = phase;
+    this.petalMaterial.uniforms.uRippleStrength.value = strength;
   }
 
   update(elapsed: number): void {

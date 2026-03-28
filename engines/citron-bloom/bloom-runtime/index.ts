@@ -1,3 +1,10 @@
+export * from './bloomFrameContext';
+export * from './bloomLodGpu';
+export * from './bloomComposerPresets';
+export * from './createBloomWebGLRenderer';
+export * from './citronBloomEngineHost';
+export * from './createCitronBloomShell';
+export * from './flowerGroundPointer';
 export * from './bloomExperienceTypes';
 export * from './bloomExperienceRegistry';
 export * from './flowerBloomExperience';
@@ -5,3 +12,5 @@ export * from './flowerStageConstants';
 export * from './registerDefaultBloomExperiences';
 export * from './bloomJourneyVisualStyle';
 export * from './bloomExperienceTransition';
+export * from './bloomSceneIndex';
+export * from './bloomFilteringSceneIndex';

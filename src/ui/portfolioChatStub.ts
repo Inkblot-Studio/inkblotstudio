@@ -1,9 +1,13 @@
+import { handlePortfolioChatQuery } from '@/ui/portfolioNavigator';
+
 /**
- * Stub “Ask me anything” — wire to your API when ready (env-gated key).
+ * Journey chat: local navigation commands (Active Theory–style) plus optional API hook.
  */
 export function initPortfolioChat(formId = 'journey-chat-form'): void {
   const form = document.getElementById(formId) as HTMLFormElement | null;
   if (!form) return;
+
+  const replyEl = document.getElementById('journey-chat-reply');
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -18,8 +22,14 @@ export function initPortfolioChat(formId = 'journey-chat-form'): void {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: q }),
       }).catch(() => {});
-    } else {
-      console.info('[Inkblot] Portfolio chat stub — query:', q);
+    }
+
+    const local = handlePortfolioChatQuery(q);
+    if (replyEl) {
+      replyEl.textContent = local.reply || (endpoint ? 'Sent.' : '');
+    }
+    if (!endpoint) {
+      console.info('[Inkblot] Portfolio chat — query:', q, local);
     }
     if (input) input.value = '';
   });

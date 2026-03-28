@@ -24,7 +24,11 @@ export interface BloomExperienceScene {
   setBloomFromScroll?(scroll01: number): void;
   /** Direct bloom drive [0,1] — used by scroll journey (opening/closing curves applied by caller). */
   applyBloomDrive?(drive01: number): void;
-  setPointerWorld?(x: number, z: number): void;
+  /**
+   * Flower-local XZ on the ground disc (from ground-plane raycast). Pass NaN to clear hit.
+   * Optional `delta` + `pointerVelocity` (NDC space / sec, magnitude) tune ripple spawning.
+   */
+  setPointerWorld?(x: number, z: number, delta?: number, pointerVelocity?: number): void;
   /** Sync main camera for env shaders (e.g. particle camera shield). */
   syncEnvCamera?(camera: Camera): void;
 }

@@ -5,6 +5,7 @@ import type {
   BloomSceneFactory,
   BloomSceneFactoryContext,
 } from './bloomExperienceTypes';
+import { citronBloomSceneIndex } from './bloomSceneIndex';
 
 /**
  * Host any number of bloom experiences by id. Only one active root is attached to the scene at a time.
@@ -18,10 +19,12 @@ export class BloomExperienceRegistry {
       console.warn(`[Citron Bloom] Overwriting experience factory: ${id}`);
     }
     this.factories.set(id, factory);
+    citronBloomSceneIndex.trackFactory(id);
   }
 
   unregister(id: string): void {
-    this.factories.delete(id);
+    if (!this.factories.delete(id)) return;
+    citronBloomSceneIndex.untrackFactory(id);
   }
 
   listIds(): string[] {
@@ -50,11 +53,13 @@ export class BloomExperienceRegistry {
     const next = factory(ctx);
     scene.add(next.root);
     this.active = next;
+    citronBloomSceneIndex.setActiveExperience(id, lod);
     return next;
   }
 
   disposeActive(): void {
     if (!this.active) return;
+    citronBloomSceneIndex.clearActive();
     this.active.root.removeFromParent();
     this.active.dispose();
     this.active = null;

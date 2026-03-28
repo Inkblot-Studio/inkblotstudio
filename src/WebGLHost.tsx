@@ -10,12 +10,19 @@ export function WebGLHost() {
     let ink: Inkblot | null = null;
     let cancelled = false;
 
-    void import('./inkblotBootstrap').then((mod) => {
-      if (cancelled) return;
-      const el = document.getElementById('canvas-container');
-      if (!el) return;
-      ink = mod.mountInkblot(el);
-    });
+    void import('./inkblotBootstrap')
+      .then((mod) => {
+        if (cancelled) return;
+        const el = document.getElementById('canvas-container');
+        if (!el) {
+          console.error('[Inkblot] Missing #canvas-container');
+          return;
+        }
+        ink = mod.mountInkblot(el);
+      })
+      .catch((err) => {
+        console.error('[Inkblot] Failed to load engine chunk', err);
+      });
 
     return () => {
       cancelled = true;

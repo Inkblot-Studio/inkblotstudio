@@ -25,8 +25,16 @@ import {
   FLOWER_CAMERA_CLEARANCE_ABOVE_GROUND,
   FLOWER_GROUND_PLANE_WORLD_Y,
 } from '@citron-bloom-engine/bloom-runtime/flowerStageConstants';
+import {
+  createPointerGlassShards,
+  type PointerGlassShardsHandle,
+} from '@citron-bloom-engine/bloom-flora/createPointerGlassShards';
+import {
+  citronBloomComposerOptionsForLod,
+  transmissionResolutionScaleForBloomLod,
+} from '@citron-bloom-engine/bloom-runtime';
 import { bloomExperienceRegistry } from '@citron-bloom-engine/bloom-runtime/bloomExperienceRegistry';
-import { BLOOM_LOD_PROFILES, type BloomLod } from '@citron-bloom-engine/bloom-core/types';
+import type { BloomLod } from '@citron-bloom-engine/bloom-core/types';
 import {
   createStudioEnvironment,
   type StudioEnvironmentHandle,
@@ -47,41 +55,34 @@ import {
   type JourneyWebSceneHandle,
 } from '@/journey/journeyWebScene';
 import { initPortfolioChat } from '@/ui/portfolioChatStub';
+import {
+  clearPortfolioScrollNavigator,
+  registerPortfolioScrollNavigator,
+} from '@/ui/portfolioNavigator';
 
 /**
- * Production: Citron Bloom only with `?citronBloom` (optional `=medium` | `low`).
- * Development: Bloom is the default so `npm run dev` shows the engine; add `?fluid` for the raymarched flower.
+ * Citron Bloom is the default experience. Use `?fluid` for the legacy raymarched flower, or
+ * `?citronBloom=0` / `?classic=1` for the older sections + fluid stack.
  */
 function parseCitronBloomMode(): { active: boolean; lod: BloomLod } {
   const params = new URLSearchParams(location.search);
   if (params.has('fluid')) {
     return { active: false, lod: 'high' };
   }
-  const raw = params.get('citronBloom');
+  const optOut =
+    params.get('citronBloom') === '0' ||
+    params.get('citronBloom') === 'false' ||
+    params.get('classic') === '1';
+  if (optOut) {
+    return { active: false, lod: 'high' };
+  }
   const lodFrom = (v: string | null): BloomLod =>
     v === 'medium' || v === 'low' ? v : 'high';
-
-  if (raw !== null) {
+  const raw = params.get('citronBloom');
+  if (raw !== null && raw !== '' && raw !== 'true' && raw !== '1') {
     return { active: true, lod: lodFrom(raw) };
   }
-  if (import.meta.env.DEV) {
-    return { active: true, lod: lodFrom(params.get('lod')) };
-  }
-  return { active: false, lod: 'high' };
-}
-
-/** Transmission buffer scale for physical glass; pairs with PMREM scene.environment. */
-function transmissionResolutionScaleForBloomLod(lod: BloomLod): number {
-  switch (lod) {
-    case 'high':
-      return 1;
-    case 'medium':
-      return 0.5;
-    case 'low':
-      return 0.25;
-    default:
-      return 1;
-  }
+  return { active: true, lod: lodFrom(params.get('lod')) };
 }
 
 /** `?experience=stomp` — iridescent stomp + floating video tiles; default `flower`. */
@@ -128,6 +129,7 @@ export class Inkblot {
   private transitionSceneHandle: BloomTransitionSceneHandle | null = null;
   private readonly bloomSwap = new BloomExperienceSwapController();
   private studioEnvironment: StudioEnvironmentHandle | null = null;
+  private glassShards: PointerGlassShardsHandle | null = null;
 
   constructor(container: HTMLElement) {
     const { active: useCitronBloom, lod: citronBloomLod } = parseCitronBloomMode();
@@ -160,14 +162,7 @@ export class Inkblot {
     );
 
     if (useCitronBloom) {
-      const profile = BLOOM_LOD_PROFILES[citronBloomLod];
-      this.postprocessing = new CitronBloomComposer({
-        // Lower than profile so the flower stays readable; threshold leaves midtones crisp.
-        bloomStrength: profile.bloomStrength * 0.48,
-        bloomRadius: 0.36,
-        bloomThreshold: 0.82,
-        enableDof: profile.enableDof,
-      });
+      this.postprocessing = new CitronBloomComposer(citronBloomComposerOptionsForLod(citronBloomLod));
     } else {
       this.postprocessing = new PostprocessingPipeline();
     }
@@ -261,8 +256,15 @@ export class Inkblot {
       initPortfolioChat();
     }
 
+    if (this.useCitronBloom) {
+      this.glassShards = createPointerGlassShards(this.citronBloomLod);
+      this.scene.instance.add(this.glassShards.group);
+    }
+
     initNavChrome(this.audioSystem);
     initCookieConsent();
+
+    registerPortfolioScrollNavigator((p) => this.scrollSystem.scrollToProgress(p));
 
     this.onResize();
 
@@ -308,6 +310,24 @@ export class Inkblot {
       '--scroll-raw',
       String(this.scrollSystem.progress),
     );
+    if (this.useCitronBloom) {
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) {
+        document.documentElement.style.setProperty('--at-neon-flicker', '1');
+        document.documentElement.style.setProperty('--at-neon-pulse', '0.45');
+      } else {
+        const flick =
+          0.88 +
+          Math.sin(elapsed * 2.85) * 0.05 +
+          Math.sin(elapsed * 7.12 + 1.7) * 0.028 +
+          Math.sin(elapsed * 13.4) * 0.014;
+        document.documentElement.style.setProperty('--at-neon-flicker', flick.toFixed(4));
+        document.documentElement.style.setProperty(
+          '--at-neon-pulse',
+          (0.42 + 0.08 * Math.sin(elapsed * 1.1)).toFixed(4),
+        );
+      }
+    }
     this.interactionSystem.update(this.frameContext);
     this.animationSystem.setScrollProgress(this.scrollSystem.progress);
     if (this.useCitronBloom) {
@@ -543,6 +563,21 @@ export class Inkblot {
       this.postprocessing.setJourneyVisual({ style, localT, pulse, elapsed });
     }
 
+    let shardJourneySection = -1;
+    if (this.useCitronBloom && this.activeBloomExperienceId === 'flower') {
+      shardJourneySection = resolveJourney(this.scrollSystem.progress).section;
+    }
+
+    this.glassShards?.update({
+      elapsed,
+      delta,
+      camera: this.camera.instance,
+      pointerNdc: this.interactionSystem.pointer,
+      pointerVelocityNdc: this.interactionSystem.pointerVelocity,
+      enabled: this.useCitronBloom,
+      journeySection: shardJourneySection,
+    });
+
     this.postprocessing.render(
       this.renderer.instance,
       this.scene.instance,
@@ -565,6 +600,8 @@ export class Inkblot {
     this.renderer.instance.setAnimationLoop(null);
     window.removeEventListener('resize', this.onResize);
 
+    clearPortfolioScrollNavigator();
+
     for (const component of this.components) component.dispose();
     for (const system of this.systems) system.dispose();
 
@@ -578,6 +615,9 @@ export class Inkblot {
     this.scene.instance.environment = null;
     this.studioEnvironment?.dispose();
     this.studioEnvironment = null;
+
+    this.glassShards?.dispose();
+    this.glassShards = null;
 
     this.postprocessing.dispose();
     this.controls.dispose();

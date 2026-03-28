@@ -68,7 +68,11 @@ export class InkblotRenderer {
     // Background — PALETTE.background (#020617)
     gl.setClearColor(COLORS.background, 1);
 
-    container.appendChild(gl.domElement);
+    const canvas = gl.domElement;
+    canvas.style.display = 'block';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    container.appendChild(canvas);
     this.resize();
   }
 

@@ -1,89 +1,76 @@
 import type { FrameContext, IComponent } from '@/types';
 import { clamp } from '@/utils/math';
 import {
-  bloomExperienceRegistry,
-  registerDefaultBloomExperiences,
+  CitronBloomEngineHost,
   type BloomCameraMode,
-  type BloomExperienceScene,
 } from '@citron-bloom-engine/bloom-runtime';
 import type { BloomLod } from '@citron-bloom-engine/bloom-core/types';
 import type { InteractionSystem } from '@/systems/interactionSystem';
 
+/**
+ * Inkblot adapter around {@link CitronBloomEngineHost} — keeps scroll, journey, and chrome in the app;
+ * all experience lifecycle lives in the Citron Bloom engine.
+ */
 export class CitronBloomComponent implements IComponent {
-  private active: BloomExperienceScene | null = null;
+  private readonly host: CitronBloomEngineHost;
   private interaction: InteractionSystem | null = null;
-  private currentExperienceId: string;
 
   constructor(
-    private readonly lod: BloomLod,
+    lod: BloomLod,
     initialExperienceId: string,
     interaction?: InteractionSystem,
   ) {
-    this.currentExperienceId = initialExperienceId;
+    this.host = CitronBloomEngineHost.fromOptions({
+      lod,
+      initialExperienceId,
+      enableGroundPointer: true,
+    });
     this.interaction = interaction ?? null;
   }
 
   init(ctx: FrameContext): void {
-    registerDefaultBloomExperiences();
-    try {
-      this.active = bloomExperienceRegistry.activate(
-        this.currentExperienceId,
-        ctx.scene,
-        ctx.renderer,
-        this.lod,
-      );
-    } catch {
-      this.currentExperienceId = 'flower';
-      this.active = bloomExperienceRegistry.activate('flower', ctx.scene, ctx.renderer, this.lod);
-    }
+    this.host.init(ctx);
   }
 
   /** In-runtime swap (pairs with {@link BloomExperienceSwapController}). */
   activateExperience(experienceId: string, ctx: FrameContext): void {
-    registerDefaultBloomExperiences();
-    bloomExperienceRegistry.disposeActive();
-    try {
-      this.active = bloomExperienceRegistry.activate(experienceId, ctx.scene, ctx.renderer, this.lod);
-      this.currentExperienceId = experienceId;
-    } catch {
-      this.active = bloomExperienceRegistry.activate('flower', ctx.scene, ctx.renderer, this.lod);
-      this.currentExperienceId = 'flower';
-    }
+    this.host.activateExperience(experienceId, ctx);
   }
 
   getExperienceId(): string {
-    return this.currentExperienceId;
+    return this.host.getExperienceId();
   }
 
   update(ctx: FrameContext): void {
-    this.active?.update(ctx.delta, ctx.elapsed);
-    if (this.interaction && this.active?.setPointerWorld) {
-      this.active.setPointerWorld(this.interaction.pointer.x * 2.2, this.interaction.pointer.y * 1.4);
+    if (this.interaction) {
+      this.host.updateWithInteraction(
+        ctx,
+        this.interaction.pointer,
+        this.interaction.pointerVelocity,
+      );
+    } else {
+      this.host.update(ctx);
     }
   }
 
   /** Call after {@link InkblotCamera.update} so env particles use the frame’s camera pose. */
   syncEnvParticlesCamera(ctx: FrameContext): void {
-    this.active?.syncEnvCamera?.(ctx.camera);
+    this.host.syncEnvCamera(ctx.camera);
   }
 
   getCameraMode(): BloomCameraMode {
-    return this.active?.cameraMode ?? 'delicate';
+    return this.host.getCameraMode();
   }
 
   setBloomFromScroll(scroll01: number): void {
-    const s = clamp(scroll01, 0, 1);
-    this.active?.setBloomFromScroll?.(s);
+    this.host.setBloomFromScroll(clamp(scroll01, 0, 1));
   }
 
-  /** Scroll journey: pass pre-computed bloom drive in [0, 1]. */
   applyBloomDrive(drive01: number): void {
-    const d = clamp(drive01, 0, 1);
-    this.active?.applyBloomDrive?.(d);
+    this.host.applyBloomDrive(clamp(drive01, 0, 1));
   }
 
   dispose(): void {
-    bloomExperienceRegistry.disposeActive();
-    this.active = null;
+    this.host.dispose();
   }
 }

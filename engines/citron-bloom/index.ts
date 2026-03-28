@@ -1,5 +1,8 @@
 /**
- * Citron Bloom — Three.js engine (`bloom-*` modules). Lives under `/engines/citron-bloom` for reuse in Citron.
+ * Citron Bloom — self-contained Three.js engine (`bloom-*` modules).
+ *
+ * - **Embedded**: {@link CitronBloomEngineHost} + your `Scene` / `WebGLRenderer` / `Camera` (Inkblot path).
+ * - **Standalone**: {@link createCitronBloomShell} for a minimal full stack in one call.
  */
 export * from './bloom-core';
 export * from './bloom-curves';

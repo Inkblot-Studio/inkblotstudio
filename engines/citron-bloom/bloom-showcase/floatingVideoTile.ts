@@ -13,6 +13,7 @@ import {
 import type { WebGLRenderer } from 'three';
 import { Text } from 'troika-three-text';
 import { createRoundedPlateGeometry } from './roundedPlateGeometry';
+import { deferVideoSource } from './deferVideoSource';
 
 /** Troika `Text` runtime props missing from bundled typings. */
 type TroikaText = Text & {
@@ -114,8 +115,7 @@ export function createFloatingVideoTile(options: FloatingVideoTileOptions): Floa
     videoEl.loop = true;
     videoEl.muted = true;
     videoEl.playsInline = true;
-    videoEl.src = options.videoSrc;
-    void videoEl.play().catch(() => {});
+    deferVideoSource(videoEl, options.videoSrc);
     const vt = new VideoTexture(videoEl);
     vt.colorSpace = SRGBColorSpace;
     innerMat = new MeshBasicMaterial({ map: vt, toneMapped: true });

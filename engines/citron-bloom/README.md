@@ -20,13 +20,13 @@ Self-contained Three.js module for the Citron ecosystem. It lives under **`engin
    scene.add(bloom.root);
    ```
 
-4. **Each frame**, call `bloom.update(delta, elapsed)` and optionally `bloom.setPointerWorld(x, z)` from mouse/touch (world-ish XZ; scale to taste). Use `bloom.setBloomTarget(main, branch?, bud?)` to animate flower opening (0 = closed bud, 1 = full bloom).
+4. **Each frame**, call `bloom.update(delta, elapsed)` and optionally `bloom.setPointerWorld(x, z, delta?, pointerVelocity?)` with **flower-root local XZ** on the ground disc (Inkblot raycasts the world ground plane into the experience root). Ripples and mist pull use that space; pass `NaN` for x/z when the ray misses. Use `bloom.setBloomTarget(main, branch?, bud?)` to animate flower opening (0 = closed bud, 1 = full bloom).
 
 5. **Post-processing** (recommended): create a `CitronBloomComposer`, call `init(renderer, scene, camera)` once, then each frame call `composer.render(renderer, scene, camera)` instead of `renderer.render(...)`. Resize with `composer.resize(w, h, dpr)` on window resize.
 
 6. **Optional HUD**: `import { mountBloomHud } from '@citron-bloom-engine/bloom-ui/mountBloomHud'` and pass a DOM node plus callbacks that call `setBloomTarget` on your handle.
 
-**In this Inkblot repo**, `npm run dev` **loads Citron Bloom by default** (with composer + HUD). Use **`?fluid`** for the original raymarched flower. **`?lod=medium`** or **`?lod=low`** tweaks engine quality in dev. Production builds keep the classic experience unless you add **`?citronBloom`** (same as before).
+**In this Inkblot repo**, Citron Bloom is the **default** in dev and production (composer + HUD). Use **`?fluid`** for the original raymarched flower, or **`?citronBloom=0`** / **`?classic=1`** for the legacy sections + fluid stack. **`?lod=medium`** or **`?lod=low`** tweaks engine quality; **`?citronBloom=medium`** (or `low`) sets bloom LOD explicitly.
 
 ## Layout
 
@@ -50,7 +50,7 @@ Self-contained Three.js module for the Citron ecosystem. It lives under **`engin
 Helper entry points:
 
 - `defaultFlowerLayers()` — opinionated 4-ring layout you can clone and tweak.
-- `createCitronBloomScene()` — **double DNA spines**, **leaf halo**, **floral assembly**, a **living particle moss ground** (small stem hole, fills the hero view), and optional sparse trees via `{ enableRingForest: true }` (muted bark/needle colors). The default **flower** experience enables the ring from `flowerBloomExperience`. Pointer drives ground + ring via `setPointerWorld`.
+- `createCitronBloomScene()` — **double DNA spines**, **leaf halo**, **floral assembly**, **ground-hugging mist particles** (ripples + pointer pull, no solid floor), **ambient motes** above the disc (bloom-linked glow), and optional sparse trees via `{ enableRingForest: true }` (muted bark/needle colors). The default **flower** experience enables the ring from `flowerBloomExperience`. `setPointerWorld` drives mist ripples; petal rim picks up an aggregate shimmer from the same ripple field.
 - **Dual-scene scroll blend** (Inkblot flower mode): [`createBloomTransitionScene`](examples/createBloomTransitionScene.ts) is the secondary scene; journey blend is `computeJourneyDualSceneBlend` in the app (`src/journey/sectionMap.ts`) driving [`CitronBloomComposer.setSceneTransition`](bloom-postprocess/citronBloomComposer.ts). **Runtime experience swap**: [`BloomExperienceSwapController`](bloom-runtime/bloomExperienceTransition.ts) + [`setExperienceBlackout`](bloom-postprocess/citronBloomComposer.ts) on the journey pass; in dev, `window.inkblotEngine?.swapBloomExperience('stomp')`.
 
 ## Usage (programmatic)
@@ -64,7 +64,8 @@ scene.add(handle.root);
 
 function frame(dt: number, elapsed: number) {
   handle.update(dt, elapsed);
-  handle.setPointerWorld(pointerX, pointerZ);
+  // Local XZ on the ground disc; optional frame delta + pointer speed for ripple spawn rate
+  handle.setPointerWorld?.(pointerLocalX, pointerLocalZ, dt, pointerVelNdc);
 }
 ```
 
@@ -98,7 +99,7 @@ Lower-level: `buildParticleTreeSamples`, `sampleCurveWithJitter`, `createInstanc
 
 ## Inkblot demo
 
-See **How to use** above: local dev defaults to this engine; **`?fluid`** restores the raymarched flower. For production previews, use **`?citronBloom`** (optional **`=medium`** | **`=low`**). Try **`?experience=particleforest`** or **`?experience=particleinterior`** for particle-environment demos.
+See **How to use** above: the site defaults to this engine; **`?fluid`** restores the raymarched flower; **`?citronBloom=0`** opts out. Optional **`?citronBloom=medium`** | **`=low`** for LOD. Try **`?experience=particleforest`** or **`?experience=particleinterior`** for particle-environment demos.
 
 ## Performance
 

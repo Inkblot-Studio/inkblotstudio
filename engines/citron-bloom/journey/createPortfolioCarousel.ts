@@ -15,6 +15,7 @@ import {
 } from 'three';
 import type { WebGLRenderer } from 'three';
 import { Text } from 'troika-three-text';
+import { deferVideoSource } from '../bloom-showcase/deferVideoSource';
 
 export interface PortfolioCarouselProject {
   readonly title: string;
@@ -154,8 +155,7 @@ function createTrianglePortfolioSlab(
     videoEl.loop = true;
     videoEl.muted = true;
     videoEl.playsInline = true;
-    videoEl.src = options.videoSrc;
-    void videoEl.play().catch(() => {});
+    deferVideoSource(videoEl, options.videoSrc);
     const vt = new VideoTexture(videoEl);
     vt.colorSpace = SRGBColorSpace;
     innerMat = new MeshBasicMaterial({ map: vt, toneMapped: true });

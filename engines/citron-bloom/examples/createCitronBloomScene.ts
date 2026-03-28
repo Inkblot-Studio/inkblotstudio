@@ -5,6 +5,7 @@ import { dnaHelixPoints, catmullFromPoints } from '../bloom-curves/curveUtils';
 import { createDnaSpineMesh, disposeDnaSpine, updateDnaSpineTime } from '../bloom-curves/dnaSpine';
 import { InstancedMicroLeaves } from '../bloom-core/instancedMicroLeaves';
 import { BloomPhaseController } from '../bloom-flora/bloomPhase';
+import { createFlowerAmbientMotes } from '../bloom-flora/createFlowerAmbientMotes';
 import { createFlowerFogMistParticles } from '../bloom-flora/createFlowerFogMistParticles';
 import { FloralAssembly } from '../bloom-flora/floralAssembly';
 
@@ -19,7 +20,7 @@ export interface CitronBloomSceneHandle {
   update(delta: number, elapsed: number): void;
   /** Drive flower opening: 0 = buds, 1 = full bloom (smoothly animated). */
   setBloomTarget(main: number, branch?: number, bud?: number): void;
-  setPointerWorld?(x: number, z: number): void;
+  setPointerWorld?(x: number, z: number, delta?: number, pointerVelocity?: number): void;
   syncEnvCamera?(camera: Camera): void;
   dispose(): void;
 }
@@ -37,6 +38,9 @@ export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): 
   if (fogMist) {
     root.add(fogMist.group);
   }
+
+  const ambientMotes = createFlowerAmbientMotes(lod);
+  root.add(ambientMotes.group);
 
   const h1 = dnaHelixPoints(2.8, 0.22, 1.35, profile.spineTubularSegments, 0);
   const h2 = dnaHelixPoints(2.8, 0.22, 1.35, profile.spineTubularSegments, Math.PI);
@@ -99,7 +103,17 @@ export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): 
       updateDnaSpineTime(spineA, elapsed, wind.value);
       updateDnaSpineTime(spineB, elapsed, wind.value);
       leaves.update(elapsed);
-      fogMist?.update(elapsed);
+      fogMist?.update(elapsed, delta, phaseMain.progress);
+      ambientMotes.update(elapsed, delta, phaseMain.progress);
+      if (fogMist) {
+        const { phase, strength } = fogMist.getPetalRippleShimmer(elapsed);
+        floral.setRippleShimmer(phase, strength);
+      } else {
+        floral.setRippleShimmer(0, 0);
+      }
+    },
+    setPointerWorld(x: number, z: number, delta = 0, pointerVelocity = 0) {
+      fogMist?.queuePointer(x, z, delta, pointerVelocity);
     },
     setBloomTarget(main: number, branch = main * 0.85, bud = main * 0.4) {
       phaseMain.setTarget(main);
@@ -108,6 +122,7 @@ export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): 
     },
     dispose() {
       fogMist?.dispose();
+      ambientMotes.dispose();
       disposeDnaSpine(spineA);
       disposeDnaSpine(spineB);
       leaves.dispose();

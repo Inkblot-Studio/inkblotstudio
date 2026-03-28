@@ -49,6 +49,21 @@ export class ScrollSystem implements ISystem {
     this.velocityPxPerSec = damp(this.velocityPxPerSec, 0, 6.2, ctx.delta);
   }
 
+  /**
+   * Smoothly scroll the document so journey progress approaches `p` [0, 1].
+   * Native scroll events keep {@link targetProgress} in sync.
+   */
+  scrollToProgress(p: number, behavior: ScrollBehavior = 'smooth'): void {
+    const docHeight = Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight,
+    );
+    const winHeight = window.innerHeight;
+    const maxScroll = Math.max(docHeight - winHeight, 1);
+    const y = clamp(p, 0, 1) * maxScroll;
+    window.scrollTo({ top: y, behavior });
+  }
+
   dispose(): void {
     window.removeEventListener('scroll', this.onScroll);
   }

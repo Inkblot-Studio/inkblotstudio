@@ -1,4 +1,4 @@
-import { clamp, smootherstep } from '@/utils/math';
+import { clamp, smootherstep } from '../bloom-core/math';
 import {
   createCitronBloomScene,
   type CitronBloomSceneHandle,
@@ -30,8 +30,8 @@ function wrapFlowerHandle(handle: CitronBloomSceneHandle): BloomExperienceScene 
     update(delta: number, elapsed: number) {
       handle.update(delta, elapsed);
     },
-    setPointerWorld(x: number, z: number) {
-      handle.setPointerWorld?.(x, z);
+    setPointerWorld(x: number, z: number, delta?: number, pointerVelocity?: number) {
+      handle.setPointerWorld?.(x, z, delta, pointerVelocity);
     },
     syncEnvCamera(camera) {
       handle.syncEnvCamera?.(camera);
