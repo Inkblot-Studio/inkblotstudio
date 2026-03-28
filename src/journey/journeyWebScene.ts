@@ -3,7 +3,7 @@ import { FogExp2, Group, Mesh, type Object3D } from 'three';
 import type { BloomLod } from '@citron-bloom-engine/bloom-core/types';
 import { createGlassLogoHero } from '@citron-bloom-engine/journey/createGlassLogoHero';
 import { createPortfolioCarousel } from '@citron-bloom-engine/journey/createPortfolioCarousel';
-import { createWaterCathedralScene } from '@citron-bloom-engine/journey/createWaterCathedralScene';
+import { createClientGallery } from '@citron-bloom-engine/journey/createClientGallery';
 import { createLabPortalScene } from '@citron-bloom-engine/journey/createLabPortalScene';
 import type { PortfolioProject } from '@/data/portfolioProjects';
 import type { JourneyState } from './sectionMap';
@@ -36,7 +36,6 @@ export interface JourneyWebSceneHandle {
   dispose(): void;
 }
 
-const journeyWaterFog = new FogExp2(0x021018, 0.038);
 const journeyLabFog = new FogExp2(0x020814, 0.036);
 
 export function createJourneyWebScene(
@@ -48,15 +47,15 @@ export function createJourneyWebScene(
 
   const hero = createGlassLogoHero();
   const portfolio = createPortfolioCarousel(projects);
-  const water = createWaterCathedralScene();
+  const gallery = createClientGallery(projects);
   const lab = createLabPortalScene({ lod });
 
   hero.group.name = 'journey-hero-logo';
   portfolio.group.name = 'journey-portfolio';
-  water.group.name = 'journey-water';
+  gallery.group.name = 'journey-gallery';
   lab.group.name = 'journey-lab';
 
-  root.add(hero.group, portfolio.group, water.group, lab.group);
+  root.add(hero.group, portfolio.group, gallery.group, lab.group);
 
   return {
     root,
@@ -70,32 +69,31 @@ export function createJourneyWebScene(
       if (section === 2) {
         portfolio.update(renderer, elapsed, localT * Math.PI * 0.85 + elapsed * 0.04);
       }
-      water.update(elapsed, localT);
+      if (section === 3) {
+        gallery.update(elapsed, localT);
+      }
       lab.update(delta, elapsed, localT);
 
       setMeshTreeOpacity(hero.group, heroOpacity);
 
       hero.group.visible = heroOpacity > 0.02;
       portfolio.group.visible = section === 2;
-      water.group.visible = section === 3;
+      gallery.group.visible = section === 3;
       lab.group.visible = section === 4;
     },
     dispose() {
       hero.dispose();
       portfolio.dispose();
-      water.dispose();
+      gallery.dispose();
       lab.dispose();
     },
   };
 }
 
 export function syncJourneyFog(scene: Scene, section: number): void {
-  if (section === 3) {
-    scene.fog = journeyWaterFog;
-  } else if (section === 4) {
+  if (section === 4) {
     scene.fog = journeyLabFog;
   } else {
-    /** Flower acts (0, 5): no fog — keeps #020617 void and avoids muddy brown/teal shift. */
     scene.fog = null;
   }
 }

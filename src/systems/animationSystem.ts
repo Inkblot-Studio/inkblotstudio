@@ -53,14 +53,12 @@ function sampleFlowerJourneyPose(
   }
 
   if (section === 3) {
-    const sub = Math.min(1, Math.max(0, Math.pow((localT - 0.02) / 0.88, 0.62)));
-    const drift = Math.sin(ctx.elapsed * 0.036) * (0.18 + sub * 0.28);
-    const camY = 3.15 + py - sub * 2.05 + Math.sin(ctx.elapsed * 0.042) * 0.08 * sub;
-    const camZ = 9.4 - sub * 3.15 + localT * 0.55;
-    const lookY = -0.42 + sub * 0.55 + localT * 0.12;
-    const lookZ = sub * 0.45;
-    outPos.set(drift + px, camY, camZ);
-    outLook.set(0, lookY, lookZ);
+    const t = Math.pow(smoothstep(0, 1, localT), 0.58);
+    const lateralTrack = lerp(-2.8, 2.8, t);
+    const z = lerp(7.2, 4.5, t);
+    const breathe = Math.sin(ctx.elapsed * 0.04) * 0.015;
+    outPos.set(lateralTrack + px, 1.35 + breathe + py, z);
+    outLook.set(lateralTrack * 0.3, 0.95, -t * 2.2);
     return;
   }
 

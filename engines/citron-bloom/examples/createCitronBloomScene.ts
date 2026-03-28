@@ -1,4 +1,4 @@
-import type { Camera } from 'three';
+import type { Camera, Texture } from 'three';
 import { Group } from 'three';
 import type { BloomLod } from '../bloom-core/types';
 import { BloomGraphBuilder, DEFAULT_CITRON_BLOOM_GRAPH } from '../bloom-runtime/bloomSceneGraph';
@@ -16,6 +16,7 @@ export interface CitronBloomSceneHandle {
   setBloomTarget(main: number, branch?: number, bud?: number): void;
   setPointerWorld?(x: number, z: number, delta?: number, pointerVelocity?: number): void;
   syncEnvCamera?(camera: Camera): void;
+  setEnvMap?(texture: Texture | null, intensity?: number): void;
   dispose(): void;
 }
 
@@ -46,6 +47,9 @@ export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): 
     },
     setBloomTarget(main: number, branch = main * 0.85, bud = main * 0.4) {
       builder.setBloomTarget(main, branch, bud);
+    },
+    setEnvMap(texture: Texture | null, intensity?: number) {
+      builder.setEnvMap(texture, intensity);
     },
     dispose() {
       builder.dispose();

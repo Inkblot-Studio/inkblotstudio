@@ -1,4 +1,4 @@
-import type { Camera, Object3D, Scene, WebGLRenderer } from 'three';
+import type { Camera, Object3D, Scene, Texture, WebGLRenderer } from 'three';
 import type { BloomLod } from '../bloom-core/types';
 
 /** Camera behaviour for a registered bloom experience (extends app AnimationSystem). */
@@ -31,6 +31,8 @@ export interface BloomExperienceScene {
   setPointerWorld?(x: number, z: number, delta?: number, pointerVelocity?: number): void;
   /** Sync main camera for env shaders (e.g. particle camera shield). */
   syncEnvCamera?(camera: Camera): void;
+  /** Pass the studio IBL texture to custom ShaderMaterial objects that need it. */
+  setEnvMap?(texture: Texture | null, intensity?: number): void;
 }
 
 export type BloomSceneFactory = (ctx: BloomSceneFactoryContext) => BloomExperienceScene;

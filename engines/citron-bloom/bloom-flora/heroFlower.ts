@@ -7,6 +7,7 @@ import {
   Matrix4,
   Quaternion,
   ShaderMaterial,
+  type Texture,
   Vector3,
 } from 'three';
 import heroPetalVert from './shaders/heroPetal.vert';
@@ -75,6 +76,8 @@ export class HeroFlower extends Group {
         uBloom: { value: 0 },
         uWind: { value: 1 },
         uPulse: { value: 0 },
+        uEnvMap: { value: null },
+        uEnvMapIntensity: { value: 0 },
       },
       transparent: true,
       depthWrite: true,
@@ -166,6 +169,11 @@ export class HeroFlower extends Group {
 
   setRippleShimmer(_phase: number, _strength: number): void {
     /* reserved for future per-petal ripple */
+  }
+
+  setEnvMap(texture: Texture | null, intensity = 1.5): void {
+    this.petalMat.uniforms.uEnvMap.value = texture;
+    this.petalMat.uniforms.uEnvMapIntensity.value = texture ? intensity : 0;
   }
 
   update(elapsed: number): void {

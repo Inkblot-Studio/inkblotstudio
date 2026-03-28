@@ -3,7 +3,7 @@ import { clamp, smoothstep } from '@/utils/math';
 export const JOURNEY_SECTION_COUNT = 6;
 
 /** Default desktop weights (sum arbitrary; normalized in resolve). */
-/** Longer acts: flower, hero, portfolio, water, lab, closing flower. */
+/** Longer acts: flower, hero, portfolio, gallery, lab, closing flower. */
 const JOURNEY_WEIGHTS_DEFAULT = [0.18, 0.16, 0.24, 0.18, 0.12, 0.12] as const;
 
 export interface JourneyState {

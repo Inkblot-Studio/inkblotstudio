@@ -1,4 +1,4 @@
-import { Group } from 'three';
+import { Group, type Texture } from 'three';
 import type { BloomLodProfile } from '../bloom-core/types';
 import { HeroFlower } from './heroFlower';
 import type { BloomPhaseController } from './bloomPhase';
@@ -51,6 +51,10 @@ export class FloralAssembly extends Group {
 
   setRippleShimmer(phase: number, strength: number): void {
     this.flower.setRippleShimmer(phase, strength);
+  }
+
+  setEnvMap(texture: Texture | null, intensity?: number): void {
+    this.flower.setEnvMap(texture, intensity);
   }
 
   dispose(): void {

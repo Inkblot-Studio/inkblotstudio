@@ -36,6 +36,9 @@ function wrapFlowerHandle(handle: CitronBloomSceneHandle): BloomExperienceScene 
     syncEnvCamera(camera) {
       handle.syncEnvCamera?.(camera);
     },
+    setEnvMap(texture, intensity) {
+      handle.setEnvMap?.(texture, intensity);
+    },
     dispose() {
       handle.dispose();
     },

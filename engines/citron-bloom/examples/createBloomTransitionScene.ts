@@ -4,18 +4,17 @@ import {
   DoubleSide,
   FogExp2,
   Group,
-  MathUtils,
   Mesh,
   MeshBasicMaterial,
-  MeshPhysicalMaterial,
   MeshStandardMaterial,
   OctahedronGeometry,
   PlaneGeometry,
-  PointLight,
   Scene,
 } from 'three';
 import type { Camera } from 'three';
 import { Text } from 'troika-three-text';
+import { createGlassMaterial } from '../bloom-core/glassMaterialFactory';
+import { createCinematicLighting } from '../bloom-core/sceneLighting';
 
 const IBM_PLEX_MONO =
   'https://fonts.gstatic.com/s/ibmplexmono/v19/jMAS9GvGsKxCA-WtwUKzsL_jdstr.woff2';
@@ -62,17 +61,8 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
   const ambient = new AmbientLight(0x6a5acd, 0.28);
   scene.add(ambient);
 
-  const key = new PointLight(0x9966ff, 1.35, 28, 1.8);
-  key.position.set(2.8, 3.2, 4.2);
-  scene.add(key);
-
-  const teal = new PointLight(0x22d3ee, 1.05, 22, 1.6);
-  teal.position.set(-3.5, 1.2, 2.4);
-  scene.add(teal);
-
-  const rim = new PointLight(0xff66cc, 0.55, 16, 1.4);
-  rim.position.set(0, -0.8, -2.2);
-  scene.add(rim);
+  const lighting = createCinematicLighting('transition');
+  scene.add(lighting.key, lighting.fill, lighting.rim);
 
   const floor = new Mesh(
     new PlaneGeometry(120, 120, 1, 1),
@@ -99,17 +89,10 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
 
   for (let i = 0; i < 36; i++) {
     const t = i / 35;
-    const mat = new MeshPhysicalMaterial({
+    const mat = createGlassMaterial('crystal-shard', {
       color: new Color().setHSL(0.72 + t * 0.14 + (rnd() - 0.5) * 0.04, 0.62, 0.48),
-      metalness: 0.9,
-      roughness: MathUtils.lerp(0.12, 0.28, t),
-      clearcoat: 0.85,
-      clearcoatRoughness: 0.12,
-      iridescence: 1,
-      iridescenceIOR: 1.32,
-      iridescenceThicknessRange: [100, 420],
-      emissive: new Color().setHSL(0.78, 0.5, 0.25),
-      emissiveIntensity: MathUtils.lerp(0.28, 0.08, t) * (0.85 + rnd() * 0.3),
+      roughness: 0.12 + t * 0.16,
+      emissiveIntensity: (0.28 - t * 0.2) * (0.85 + rnd() * 0.3),
     });
     const mesh = new Mesh(shardGeo, mat);
     const spread = 0.32;
@@ -142,15 +125,10 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
 
   const glass = new Mesh(
     new PlaneGeometry(3.85, 2.02),
-    new MeshPhysicalMaterial({
-      color: 0x0c5c40,
-      metalness: 0.06,
-      roughness: 0.14,
+    createGlassMaterial('slab-glass', {
+      color: new Color(0x0c5c40),
       transmission: 0.9,
       thickness: 0.42,
-      ior: 1.47,
-      transparent: true,
-      side: DoubleSide,
       emissive: new Color(0x062818),
       emissiveIntensity: 0.35,
       attenuationColor: new Color(0x0a3d28),
@@ -193,10 +171,6 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
 
   scene.add(menuRoot);
 
-  const baseKey = key.intensity;
-  const baseTeal = teal.intensity;
-  const baseRim = rim.intensity;
-
   return {
     scene,
 
@@ -208,9 +182,7 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
 
       menuRoot.quaternion.copy(camera.quaternion);
 
-      key.intensity = baseKey + Math.sin(elapsed * 1.05) * 0.22;
-      teal.intensity = baseTeal + Math.sin(elapsed * 0.88 + 1.2) * 0.18;
-      rim.intensity = baseRim + Math.sin(elapsed * 1.4) * 0.12;
+      lighting.update(elapsed);
 
       cardTitle.sync();
       cardSub.sync();
@@ -227,9 +199,12 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
       spine.traverse((obj) => {
         const m = obj as Mesh;
         if (m.isMesh) {
-          (m.material as MeshPhysicalMaterial).dispose?.();
+          const mt = m.material;
+          if (Array.isArray(mt)) mt.forEach((x) => x.dispose());
+          else mt?.dispose();
         }
       });
+      lighting.dispose();
       shardGeo.dispose();
 
       floor.geometry.dispose();
@@ -238,7 +213,7 @@ export function createBloomTransitionScene(): BloomTransitionSceneHandle {
       cardBack.geometry.dispose();
       (cardBack.material as MeshBasicMaterial).dispose();
       glass.geometry.dispose();
-      (glass.material as MeshPhysicalMaterial).dispose();
+      glass.material.dispose();
     },
   };
 }

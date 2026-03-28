@@ -300,6 +300,10 @@ export class Inkblot {
   private initStudioEnvironment(): void {
     const env = createStudioEnvironment(this.renderer.instance);
     this.scene.setEnvironment(env.texture);
+    if (this.transitionSceneHandle) {
+      this.transitionSceneHandle.scene.environment = env.texture;
+    }
+    bloomExperienceRegistry.getActive()?.setEnvMap?.(env.texture, 1.5);
     this.studioEnvironment = env;
   }
 

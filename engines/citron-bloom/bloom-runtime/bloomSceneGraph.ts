@@ -1,4 +1,4 @@
-import { Group, Vector3 } from 'three';
+import { Group, type Texture, Vector3 } from 'three';
 import { catmullFromPoints, dnaHelixPoints } from '../bloom-curves/curveUtils';
 import { createDnaSpineMesh, updateDnaSpineTime, disposeDnaSpine } from '../bloom-curves/dnaSpine';
 import { InstancedMicroLeaves } from '../bloom-core/instancedMicroLeaves';
@@ -129,6 +129,10 @@ export class BloomGraphBuilder {
     this.phaseMain.setTarget(main);
     this.phaseBranch.setTarget(branch);
     this.phaseBud.setTarget(bud);
+  }
+
+  setEnvMap(texture: Texture | null, intensity?: number) {
+    if (this.floral) this.floral.setEnvMap(texture, intensity);
   }
 
   dispose() {

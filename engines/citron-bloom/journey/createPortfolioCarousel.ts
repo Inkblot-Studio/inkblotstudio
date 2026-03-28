@@ -6,13 +6,13 @@ import {
   Group,
   Mesh,
   MeshBasicMaterial,
-  MeshPhysicalMaterial,
   PlaneGeometry,
   Shape,
   SRGBColorSpace,
   TextureLoader,
   VideoTexture,
 } from 'three';
+import { createGlassMaterial } from '../bloom-core/glassMaterialFactory';
 import type { WebGLRenderer } from 'three';
 import { Text } from 'troika-three-text';
 import { deferVideoSource } from '../bloom-showcase/deferVideoSource';
@@ -92,25 +92,8 @@ const SLAB_EXTRUDE = {
   curveSegments: 14,
 };
 
-function createSlabGlassMaterial(): MeshPhysicalMaterial {
-  return new MeshPhysicalMaterial({
-    color: new Color(0x121c34),
-    metalness: 0.14,
-    roughness: 0.07,
-    transmission: 0.62,
-    thickness: 0.55,
-    ior: 1.48,
-    iridescence: 0.55,
-    iridescenceIOR: 1.2,
-    iridescenceThicknessRange: [90, 400],
-    transparent: true,
-    opacity: 1,
-    side: DoubleSide,
-    emissive: new Color(0x312e81),
-    emissiveIntensity: 0.1,
-    clearcoat: 1,
-    clearcoatRoughness: 0.06,
-  });
+function createSlabGlassMaterial() {
+  return createGlassMaterial('slab-glass');
 }
 
 interface SlabHandle {

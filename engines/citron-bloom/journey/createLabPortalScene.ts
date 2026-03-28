@@ -3,12 +3,15 @@ import {
   AdditiveBlending,
   Color,
   Group,
+  IcosahedronGeometry,
   Mesh,
+  OctahedronGeometry,
   PlaneGeometry,
-  PointLight,
   ShaderMaterial,
 } from 'three';
 import type { BloomLod } from '../bloom-core/types';
+import { createGlassMaterial } from '../bloom-core/glassMaterialFactory';
+import { createCinematicLighting } from '../bloom-core/sceneLighting';
 import { createParticleFlow } from '../bloom-particle-env/particle-flow/createParticleFlow';
 import { createParticleInterior } from '../bloom-particle-env/particle-interior/createParticleInterior';
 
@@ -114,13 +117,21 @@ export function createLabPortalScene(options: CreateLabPortalSceneOptions = {}):
   flow.group.scale.setScalar(0.92);
   group.add(flow.group);
 
-  const fillCool = new PointLight(0x5599cc, 0.62, 16);
-  fillCool.position.set(-1.35, 2.35, -1.85);
-  group.add(fillCool);
+  const lighting = createCinematicLighting('lab');
+  group.add(lighting.key, lighting.fill, lighting.rim);
 
-  const fillWarm = new PointLight(0x88c4aa, 0.38, 12);
-  fillWarm.position.set(1.4, 1.15, -2.1);
-  group.add(fillWarm);
+  const crystals: Mesh[] = [];
+  const crystalGeos = [new OctahedronGeometry(0.12, 0), new IcosahedronGeometry(0.08, 0)];
+  for (let i = 0; i < 3; i++) {
+    const mat = createGlassMaterial('lab-crystal');
+    const mesh = new Mesh(crystalGeos[i % 2], mat);
+    const angle = (i / 3) * Math.PI * 2 + 0.5;
+    mesh.position.set(Math.cos(angle) * 1.6, 1.2 + i * 0.45, -2.4 + Math.sin(angle) * 0.8);
+    mesh.rotation.set(i * 1.1, i * 0.7, i * 0.5);
+    mesh.scale.setScalar(0.8 + i * 0.2);
+    crystals.push(mesh);
+    group.add(mesh);
+  }
 
   const portalMat = new ShaderMaterial({
     uniforms: {
@@ -178,6 +189,11 @@ export function createLabPortalScene(options: CreateLabPortalSceneOptions = {}):
       floorMat.uniforms.uTime.value = elapsed;
       interior.update(delta, elapsed);
       flow.update(delta, elapsed);
+      lighting.update(elapsed);
+      for (let i = 0; i < crystals.length; i++) {
+        crystals[i].rotation.y = elapsed * 0.12 + i * 1.2;
+        crystals[i].rotation.x = elapsed * 0.07 + i * 0.8;
+      }
     },
     syncEnvCamera(camera: Camera) {
       interior.syncEnvCamera?.(camera);
@@ -192,8 +208,9 @@ export function createLabPortalScene(options: CreateLabPortalSceneOptions = {}):
       portalMat.dispose();
       floor.geometry.dispose();
       floorMat.dispose();
-      fillCool.dispose();
-      fillWarm.dispose();
+      lighting.dispose();
+      for (const g of crystalGeos) g.dispose();
+      for (const c of crystals) (c.material as ReturnType<typeof createGlassMaterial>).dispose();
     },
   };
 }
