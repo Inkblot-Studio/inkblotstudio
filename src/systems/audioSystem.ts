@@ -12,7 +12,7 @@ export interface MusicTrack {
 const MUSIC_LIBRARY: MusicTrack[] = [
   {
     label: 'Blue Moon',
-    artist: 'Richard Rodgers & Lorenz Hart',
+    artist: 'Inkblot Studio',
     src: `/music/${encodeURIComponent('Blue Moon.mp3')}`,
     loop: true,
   },

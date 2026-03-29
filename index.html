@@ -290,20 +290,42 @@
 
       .nav-stack-top-right {
         --nav-island-w: min(78vw, 188px);
+        --nav-island-min-h: 2.95rem;
+        --nav-player-w: calc(var(--nav-island-w) * 0.48);
+        /* Glass kit + accent (showcase default; flower journey overrides below) */
+        --nav-accent: #38bdf8;
+        --nav-accent-2: #a78bfa;
+        --nav-line: color-mix(in srgb, var(--nav-accent) 32%, #0f172a);
+        --nav-line-soft: color-mix(in srgb, var(--nav-accent) 26%, #334155);
+        --nav-ink: #f1f5f9;
+        --nav-ink-dim: color-mix(in srgb, #cbd5e1 78%, var(--nav-accent));
+        --nav-glass-fill: rgba(4, 10, 22, 0.74);
+        --nav-glass-deep: rgba(2, 6, 14, 0.88);
+        --nav-chrome-glow: 0.48;
         flex: 0 0 auto;
         margin-left: auto;
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
-        gap: 0.48rem;
+        align-items: center;
+        gap: 0;
         pointer-events: none;
         position: relative;
         overflow: visible;
         transform-origin: 100% 0%;
+        transform-style: preserve-3d;
+        will-change: transform;
         transform: perspective(1400px)
-          skewX(calc(var(--nav-warp, 0) * 12deg * var(--nav-dir, 1)))
-          scaleX(calc(1 + var(--nav-warp, 0) * 0.022));
+          rotateX(calc(var(--nav-warp, 0) * -5.5deg * var(--nav-dir, 1)))
+          translateY(calc(var(--nav-warp, 0) * -2.5px * var(--nav-dir, 1)))
+          skewX(calc(var(--nav-warp, 0) * 11deg * var(--nav-dir, 1)))
+          scaleX(calc(1 + var(--nav-warp, 0) * 0.024));
         transition: transform 0.1s ease-out;
+      }
+
+      body.journey-flower-active .nav-stack-top-right {
+        --nav-accent: var(--journey-rail, #7dd3fc);
+        --nav-accent-2: color-mix(in srgb, var(--journey-rail, #7dd3fc) 50%, #e9d5ff);
+        --nav-chrome-glow: 0.62;
       }
 
       .nav-stack-top-right > * {
@@ -314,20 +336,52 @@
         display: none;
       }
 
-      /* Monochrome halo — white ink on void, no chroma. */
-      .nav-pill-morph > .nav-pill-backlight {
-        position: absolute;
-        inset: -12px -14px -12px -14px;
-        z-index: 0;
-        border-radius: 999px;
+      /* Outside the pill: heliotrope corona — petals tilt with scroll (sun‑seeking); breathe, no rim spin */
+      .nav-stack-top-right > .nav-flora-aura {
         pointer-events: none;
-        background: radial-gradient(
-          ellipse 80% 75% at 50% 35%,
-          rgba(255, 255, 255, 0.07) 0%,
-          transparent 65%
-        );
-        opacity: 1;
-        filter: blur(26px);
+      }
+
+      .nav-flora-aura {
+        position: absolute;
+        z-index: 6;
+        right: -0.2rem;
+        top: -1.15rem;
+        width: 5rem;
+        height: 3.75rem;
+        transform-origin: 88% 100%;
+        transform: rotate(calc(var(--nav-dir, 1) * var(--nav-warp, 0) * 14deg))
+          translateX(calc(var(--nav-dir, 1) * var(--nav-warp, 0) * 5px));
+        transition: transform 0.14s ease-out;
+        filter: drop-shadow(0 0 14px color-mix(in srgb, var(--nav-accent) 42%, transparent));
+      }
+
+      .nav-flora-breathe {
+        width: 100%;
+        height: 100%;
+        transform-origin: 88% 100%;
+        animation: navFloraRespire 5.6s ease-in-out infinite alternate;
+      }
+
+      body.music-playing .nav-flora-breathe {
+        animation-duration: 4.1s;
+      }
+
+      @keyframes navFloraRespire {
+        from {
+          transform: scale(0.9);
+          opacity: 0.58;
+        }
+        to {
+          transform: scale(1.06);
+          opacity: 0.92;
+        }
+      }
+
+      .nav-flora-svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -335,19 +389,20 @@
           transform: none;
         }
 
-        .nav-pill-morph > .nav-pill-backlight {
-          filter: blur(20px);
+        .nav-flora-breathe {
+          animation: none;
+          transform: scale(1);
+          opacity: 0.72;
+        }
+
+        .nav-flora-aura {
+          filter: drop-shadow(0 0 8px color-mix(in srgb, var(--nav-accent) 28%, transparent));
         }
       }
 
-      /* B&W editorial slab: scroll shear + slight stretch only. */
       .nav-pill-morph {
-        --nav-bw-line: #2a2a2a;
-        --nav-bw-line-soft: #3f3f3f;
-        --nav-bw-ink: #f5f5f5;
-        --nav-bw-ink-dim: #a3a3a3;
         position: relative;
-        z-index: 2;
+        z-index: 3;
         width: var(--nav-island-w);
         min-width: var(--nav-island-w);
         max-width: var(--nav-island-w);
@@ -355,30 +410,35 @@
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        padding: 0.48rem 0.42rem 0.45rem;
+        min-height: var(--nav-island-min-h);
+        padding: 0.58rem 0.72rem 0.54rem;
         border-radius: 999px;
-        border: 1px solid var(--nav-bw-line);
-        background: rgba(0, 0, 0, 0.58);
+        border: 1px solid var(--nav-line);
+        background:
+          linear-gradient(
+            175deg,
+            color-mix(in srgb, var(--nav-accent) 8%, transparent) 0%,
+            transparent 48%
+          ),
+          var(--nav-glass-fill);
         box-shadow:
-          0 0 0 1px rgba(255, 255, 255, 0.04),
-          0 20px 50px rgba(0, 0, 0, 0.55);
-        -webkit-backdrop-filter: blur(16px);
-        backdrop-filter: blur(16px);
+          0 0 0 1px color-mix(in srgb, var(--nav-accent) 18%, rgba(255, 255, 255, 0.04)),
+          0 14px 36px rgba(0, 0, 0, 0.52);
+        -webkit-backdrop-filter: blur(18px) saturate(1.12);
+        backdrop-filter: blur(18px) saturate(1.12);
         overflow: visible;
-      }
-
-      .nav-pill-morph > .nav-pill-backlight {
-        pointer-events: none;
       }
 
       .nav-pill-at {
         position: relative;
         z-index: 1;
+        flex: 1;
+        min-height: 0;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.12rem 0.28rem;
-        padding: 0.1rem 0.06rem 0.14rem;
+        gap: 0.12rem 0.32rem;
+        padding: 0.16rem 0.22rem 0.2rem;
         margin: 0;
         border: none;
         border-radius: 0;
@@ -394,14 +454,11 @@
         font-weight: 500;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: var(--nav-bw-ink-dim);
+        color: var(--nav-ink-dim);
         text-decoration: none;
         white-space: nowrap;
-        transition: color 0.18s ease;
-      }
-
-      .nav-pill-link:hover {
-        color: var(--nav-bw-ink);
+        padding: 0.22rem 0.16rem;
+        border-radius: 999px;
       }
 
       .nav-flow-hit {
@@ -409,7 +466,7 @@
         width: 28px;
         max-width: 28px;
         min-width: 28px;
-        height: 16px;
+        height: 28px;
         margin: 0;
         border: none;
         padding: 0;
@@ -423,18 +480,14 @@
         -webkit-tap-highlight-color: transparent;
       }
 
-      .nav-flow-hit:hover {
-        background: rgba(255, 255, 255, 0.06);
-      }
-
       .nav-flow-hit:focus-visible {
-        outline: 1px solid #fff;
+        outline: 1px solid color-mix(in srgb, var(--nav-accent) 75%, #fff);
         outline-offset: 2px;
       }
 
       .nav-flow-wrap {
         width: 100%;
-        height: 12px;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -443,52 +496,138 @@
 
       .nav-flow-svg {
         width: 100%;
-        height: 12px;
+        height: 100%;
+        max-width: 28px;
+        max-height: 28px;
         overflow: visible;
+        color: color-mix(in srgb, var(--nav-accent) 38%, #475569);
       }
 
-      .nav-flow-svg path {
+      .nav-deck-chassis {
         fill: none;
+        stroke: currentColor;
+        stroke-width: 0.55;
+        opacity: 0.55;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .nav-deck-vinyl {
+        vector-effect: non-scaling-stroke;
+      }
+
+      .nav-deck-groove {
+        fill: none;
+        stroke: rgba(248, 250, 252, 0.07);
+        stroke-width: 0.35;
+        vector-effect: non-scaling-stroke;
+      }
+
+      body.music-playing .nav-deck-groove {
+        stroke: rgba(248, 250, 252, 0.11);
+      }
+
+      .nav-deck-petals {
+        vector-effect: non-scaling-stroke;
+      }
+
+      body:not(.music-playing) .nav-deck-petals {
+        opacity: 0.78;
+      }
+
+      body.music-playing .nav-deck-petals {
+        opacity: 1;
+      }
+
+      .nav-deck-arm {
+        fill: none;
+        stroke: color-mix(in srgb, var(--nav-ink) 50%, var(--nav-accent));
+        stroke-width: 1.05;
         stroke-linecap: round;
-        stroke-linejoin: round;
-        transition: stroke 0.35s ease, stroke-width 0.35s ease, opacity 0.35s ease;
+        opacity: 0.5;
+        vector-effect: non-scaling-stroke;
       }
 
-      body:not(.music-playing) .nav-flow-svg path {
-        stroke: #737373;
-        stroke-width: 1.65;
-        opacity: 0.85;
+      body.music-playing .nav-deck-arm {
+        opacity: 0.78;
       }
 
-      body.music-playing .nav-flow-svg path {
-        stroke: url(#nav-flow-grad);
-        stroke-width: 1.15;
-        opacity: 0.95;
+      .nav-deck-pivot {
+        fill: color-mix(in srgb, var(--nav-accent) 40%, #1e293b);
+        stroke: rgba(255, 255, 255, 0.2);
+        stroke-width: 0.35;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .nav-deck-spindle {
+        vector-effect: non-scaling-stroke;
       }
 
       .nav-player-wrap {
-        display: none;
+        --nav-player-pad-x: 0.2rem;
         position: relative;
         z-index: 2;
-        width: var(--nav-island-w);
-        min-width: var(--nav-island-w);
-        max-width: var(--nav-island-w);
+        align-self: center;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        width: var(--nav-player-w);
+        min-width: var(--nav-player-w);
+        max-width: var(--nav-player-w);
         box-sizing: border-box;
-        padding: 0.4rem 0.38rem 0.38rem;
-        border-radius: 999px;
-        border: 1px solid #2a2a2a;
-        background: rgba(0, 0, 0, 0.58);
-        box-shadow:
-          0 0 0 1px rgba(255, 255, 255, 0.04),
-          0 16px 40px rgba(0, 0, 0, 0.5);
-        -webkit-backdrop-filter: blur(16px);
-        backdrop-filter: blur(16px);
+        margin-top: 0;
+        min-height: 0;
+        max-height: 0;
+        padding: 0 var(--nav-player-pad-x);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        background: rgba(15, 23, 42, 0.35);
+        transform: translateY(-8px);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        transition:
+          opacity 0.32s ease,
+          transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+          visibility 0s linear 0.45s,
+          max-height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+          min-height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+          margin-top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+          padding-block 0.45s ease,
+          border-color 0.35s ease,
+          box-shadow 0.45s ease,
+          background 0.45s ease,
+          border-radius 0.35s ease;
+        box-shadow: none;
+      }
+
+      body.music-playing .nav-player-wrap::before {
+        display: none;
       }
 
       body.music-playing .nav-player-wrap {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        margin-top: clamp(0.8rem, 2.6vw, 1.2rem);
+        min-height: 2.5rem;
+        max-height: 5rem;
+        padding: 0.2rem 0.18rem;
+        opacity: 0.5;
+        visibility: visible;
+        pointer-events: auto;
+        overflow: visible;
+        transition-delay: 0s;
+        border-radius: 8px;
+        border-color: rgba(148, 163, 184, 0.18);
+        background: rgba(15, 23, 42, 0.4);
+        transform: translateY(0);
+        box-shadow: none;
+      }
+
+      body.music-playing .nav-player-wrap:hover,
+      body.music-playing .nav-player-wrap:focus-within {
+        opacity: 0.72;
+        border-color: rgba(148, 163, 184, 0.28);
       }
 
       .nav-mini-player {
@@ -496,9 +635,11 @@
         z-index: 1;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 0.32rem;
-        padding: 0.12rem 0.08rem;
+        justify-content: space-between;
+        align-self: stretch;
+        flex: 1;
+        gap: 0.12rem;
+        padding: 0 0.02rem;
         border: none;
         border-radius: 0;
         outline: none;
@@ -507,32 +648,33 @@
         min-width: 0;
         width: 100%;
         max-width: 100%;
-        min-height: 2rem;
-        height: auto;
+        min-height: 0;
         box-sizing: border-box;
         flex-shrink: 0;
       }
 
       .nav-mini-btn {
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: 0.46rem;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.52rem;
+        font-weight: 500;
         width: 1.28rem;
-        height: 1.28rem;
+        height: 1.35rem;
+        flex: 0 0 auto;
         display: grid;
         place-items: center;
-        border: 1px solid var(--nav-bw-line-soft);
-        border-radius: 999px;
+        border: none;
+        border-radius: 4px;
         background: transparent;
-        color: var(--nav-bw-ink-dim);
+        color: rgba(203, 213, 225, 0.85);
         cursor: pointer;
         line-height: 1;
-        transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+        padding: 0;
+        transition: color 0.15s ease, background 0.15s ease;
       }
 
       .nav-mini-btn:hover {
-        border-color: #737373;
-        color: var(--nav-bw-ink);
-        background: rgba(255, 255, 255, 0.05);
+        color: #f1f5f9;
+        background: rgba(255, 255, 255, 0.06);
       }
 
       .nav-mini-info {
@@ -542,6 +684,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 0 0.1rem;
       }
 
       .nav-mini-mq.nav-mini-mq--title {
@@ -630,20 +773,14 @@
         flex-direction: row;
         flex-wrap: nowrap;
         align-items: center;
-        gap: 0;
         padding-right: 2rem;
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: clamp(0.58rem, 1.75vw, 0.74rem);
-        font-weight: 500;
-        letter-spacing: 0.04em;
-        line-height: 1.3;
-        text-transform: uppercase;
-        color: #f5f5f5;
-      }
-
-      .nav-mini-mq-credit-part {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: clamp(0.52rem, 1.5vw, 0.65rem);
         font-weight: 400;
-        color: #737373;
+        letter-spacing: 0.06em;
+        line-height: 1.35;
+        text-transform: uppercase;
+        color: rgba(226, 232, 240, 0.88);
       }
 
       /* Virtual scroll */
@@ -1038,36 +1175,62 @@
         }
         .nav-stack-top-right {
           width: 100%;
-          align-items: flex-end;
+          align-items: center;
+          --nav-island-min-h: 2.72rem;
+        }
+        .nav-flora-aura {
+          width: 4.1rem;
+          height: 3.05rem;
+          right: -0.02rem;
+          top: -0.92rem;
+          z-index: 6;
         }
         .nav-pill-morph {
           --nav-island-w: min(72vw, 176px);
           width: var(--nav-island-w);
           min-width: var(--nav-island-w);
           max-width: var(--nav-island-w);
-          padding: 0.42rem 0.36rem 0.4rem;
+          padding: 0.5rem 0.58rem 0.46rem;
           border-radius: 999px;
         }
         .nav-pill-at {
-          padding: 0.06rem 0.02rem 0.12rem;
-          gap: 0.08rem 0.22rem;
+          padding: 0.12rem 0.16rem 0.16rem;
+          gap: 0.08rem 0.24rem;
         }
         .nav-player-wrap {
-          padding: 0.34rem 0.32rem 0.32rem;
+          --nav-player-pad-x: 0.14rem;
+        }
+        body.music-playing .nav-player-wrap {
+          padding: 0.18rem 0.14rem;
+        }
+        .nav-mini-btn {
+          width: 1.2rem;
+          height: 1.28rem;
+          font-size: 0.48rem;
         }
         .nav-pill-link {
           font-size: clamp(0.5rem, 3.1vw, 0.58rem);
           letter-spacing: 0.1em;
+          padding: 0.18rem 0.12rem;
         }
         .nav-flow-hit {
           width: 26px;
           max-width: 26px;
           min-width: 26px;
-          height: 14px;
+          height: 26px;
         }
-        .nav-flow-wrap,
         .nav-flow-svg {
-          height: 11px;
+          max-width: 26px;
+          max-height: 26px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .nav-player-wrap {
+          transition-duration: 0.01ms !important;
+        }
+        body.music-playing .nav-player-wrap {
+          transition-duration: 0.01ms !important;
         }
       }
 
@@ -1760,8 +1923,46 @@
         </a>
 
         <div class="nav-stack-top-right">
+          <div class="nav-flora-aura" aria-hidden="true">
+            <div class="nav-flora-breathe">
+              <svg class="nav-flora-svg" viewBox="0 0 100 88" preserveAspectRatio="xMidYMax meet">
+                <defs>
+                  <linearGradient id="nav-flora-petal" x1="0%" y1="100%" x2="95%" y2="5%">
+                    <stop offset="0%" stop-color="var(--nav-accent)" stop-opacity="0.55"/>
+                    <stop offset="45%" stop-color="var(--nav-accent-2)" stop-opacity="0.28"/>
+                    <stop offset="100%" stop-color="var(--nav-accent)" stop-opacity="0.08"/>
+                  </linearGradient>
+                  <radialGradient id="nav-flora-core" cx="78%" cy="92%" r="42%">
+                    <stop offset="0%" stop-color="var(--nav-accent)" stop-opacity="0.5"/>
+                    <stop offset="70%" stop-color="var(--nav-accent-2)" stop-opacity="0.12"/>
+                    <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                  </radialGradient>
+                </defs>
+                <g fill="url(#nav-flora-petal)" stroke="none">
+                  <path
+                    d="M 78 84 Q 52 62 28 44 Q 48 38 62 52 Q 74 68 78 84"
+                    opacity="0.85"
+                  />
+                  <path
+                    d="M 80 84 Q 58 52 42 22 Q 62 26 70 48 Q 76 68 80 84"
+                    opacity="0.72"
+                  />
+                  <path
+                    d="M 82 84 Q 72 48 76 18 Q 88 32 86 56 Q 84 72 82 84"
+                    opacity="0.58"
+                  />
+                  <path
+                    d="M 84 84 Q 86 54 94 32 Q 98 48 92 66 Q 88 78 84 84"
+                    opacity="0.45"
+                  />
+                </g>
+                <ellipse cx="79" cy="83" rx="5" ry="3.2" fill="url(#nav-flora-core)" opacity="0.9"/>
+                <circle cx="76" cy="81" r="1.35" fill="var(--nav-accent)" opacity="0.55"/>
+                <circle cx="82" cy="80.5" r="1.05" fill="var(--nav-accent-2)" opacity="0.45"/>
+              </svg>
+            </div>
+          </div>
           <div class="nav-pill-morph">
-            <div class="nav-pill-backlight" aria-hidden="true"></div>
             <header class="nav-pill-at">
               <a class="nav-pill-link" href="#">Work</a>
               <button
@@ -1770,20 +1971,65 @@
                 id="nav-audio-toggle"
                 aria-label="Play or pause soundtrack"
                 aria-pressed="false"
-                title="Idle: static wave. Playing: live waveform. Side curtains pulse with the track."
+                title="Floral platter: spins when music plays. Tap to play or pause."
               >
                 <span class="nav-flow-wrap">
-                  <svg class="nav-flow-svg" viewBox="0 0 220 24" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                  <svg class="nav-flow-svg" viewBox="0 0 56 56" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
                     <defs>
-                      <linearGradient id="nav-flow-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.88"/>
-                        <stop offset="35%" stop-color="#a3a3a3" stop-opacity="0.75"/>
-                        <stop offset="50%" stop-color="#fafafa" stop-opacity="0.95"/>
-                        <stop offset="65%" stop-color="#a3a3a3" stop-opacity="0.75"/>
-                        <stop offset="100%" stop-color="#e5e5e5" stop-opacity="0.85"/>
+                      <radialGradient id="nav-deck-label" cx="32%" cy="28%" r="72%">
+                        <stop offset="0%" stop-color="#f8fafc" stop-opacity="0.97"/>
+                        <stop offset="55%" stop-color="var(--nav-accent)" stop-opacity="0.45"/>
+                        <stop offset="100%" stop-color="var(--nav-accent-2)" stop-opacity="0.22"/>
+                      </radialGradient>
+                      <linearGradient id="nav-deck-petal" x1="20%" y1="0%" x2="80%" y2="100%">
+                        <stop offset="0%" stop-color="var(--nav-accent)" stop-opacity="0.92"/>
+                        <stop offset="48%" stop-color="#f8fafc" stop-opacity="0.55"/>
+                        <stop offset="100%" stop-color="var(--nav-accent-2)" stop-opacity="0.5"/>
                       </linearGradient>
                     </defs>
-                    <path id="nav-flow-path" d="M 0 12 L 220 12" />
+                    <circle class="nav-deck-chassis" cx="28" cy="28" r="27" />
+                    <g id="nav-deck-rot" transform="rotate(0 28 28)">
+                      <circle
+                        class="nav-deck-vinyl"
+                        cx="28"
+                        cy="28"
+                        r="23.5"
+                        fill="#050c16"
+                        stroke="rgba(148, 163, 184, 0.14)"
+                        stroke-width="0.45"
+                      />
+                      <circle class="nav-deck-groove" cx="28" cy="28" r="19.2" />
+                      <circle class="nav-deck-groove" cx="28" cy="28" r="15.2" />
+                      <circle class="nav-deck-groove" cx="28" cy="28" r="11.2" />
+                      <g class="nav-deck-petals" fill="url(#nav-deck-petal)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="0.22">
+                        <ellipse cx="28" cy="11.6" rx="5.1" ry="10.8" transform="rotate(0 28 28)" />
+                        <ellipse cx="28" cy="11.6" rx="5.1" ry="10.8" transform="rotate(60 28 28)" />
+                        <ellipse cx="28" cy="11.6" rx="5.1" ry="10.8" transform="rotate(120 28 28)" />
+                        <ellipse cx="28" cy="11.6" rx="5.1" ry="10.8" transform="rotate(180 28 28)" />
+                        <ellipse cx="28" cy="11.6" rx="5.1" ry="10.8" transform="rotate(240 28 28)" />
+                        <ellipse cx="28" cy="11.6" rx="5.1" ry="10.8" transform="rotate(300 28 28)" />
+                      </g>
+                      <circle cx="28" cy="28" r="8.2" fill="url(#nav-deck-label)" opacity="0.94" />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="8.2"
+                        fill="none"
+                        stroke="rgba(255, 255, 255, 0.14)"
+                        stroke-width="0.4"
+                      />
+                      <circle
+                        class="nav-deck-spindle"
+                        cx="28"
+                        cy="28"
+                        r="1.45"
+                        fill="#0a1020"
+                        stroke="rgba(255, 255, 255, 0.18)"
+                        stroke-width="0.28"
+                      />
+                    </g>
+                    <path class="nav-deck-arm" d="M 44.5 6.5 L 37.5 23.5" />
+                    <circle class="nav-deck-pivot" cx="44.5" cy="6.5" r="1.85" />
                   </svg>
                 </span>
               </button>
