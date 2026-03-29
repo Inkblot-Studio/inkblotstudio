@@ -120,6 +120,10 @@ export class CitronBloomEngineHost {
     this.active?.setBloomFromScroll?.(clamp(scroll01, 0, 1));
   }
 
+  setPollenScrollDrive(gate01: number, journeyProgress01: number): void {
+    this.active?.setPollenScrollDrive?.(gate01, journeyProgress01);
+  }
+
   applyBloomDrive(drive01: number): void {
     this.active?.applyBloomDrive?.(clamp(drive01, 0, 1));
   }

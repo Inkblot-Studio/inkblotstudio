@@ -1,12 +1,17 @@
-import type { Camera, Texture } from 'three';
-import { Group } from 'three';
+import { Group, type Camera, type Texture } from 'three';
 import type { BloomLod } from '../bloom-core/types';
-import { BloomGraphBuilder, DEFAULT_CITRON_BLOOM_GRAPH } from '../bloom-runtime/bloomSceneGraph';
+import {
+  BloomGraphBuilder,
+  DEFAULT_CITRON_BLOOM_GRAPH,
+  type BloomSceneGraph,
+} from '../bloom-runtime/bloomSceneGraph';
 
 export interface CreateCitronBloomSceneOptions {
   lod?: BloomLod;
   /** Static mist particles near “ground” level — no solid mesh (default true). */
   enableGroundMist?: boolean;
+  /** When set, used instead of the default single-node graph (e.g. flower + glass pollen). */
+  graph?: BloomSceneGraph;
 }
 
 export interface CitronBloomSceneHandle {
@@ -17,6 +22,8 @@ export interface CitronBloomSceneHandle {
   setPointerWorld?(x: number, z: number, delta?: number, pointerVelocity?: number): void;
   syncEnvCamera?(camera: Camera): void;
   setEnvMap?(texture: Texture | null, intensity?: number): void;
+  /** Section-0 pollen: gate [0,1], normalized scroll position [0,1] from host. */
+  setPollenScrollDrive?(gate01: number, journeyProgress01: number): void;
   dispose(): void;
 }
 
@@ -26,12 +33,14 @@ export interface CitronBloomSceneHandle {
  */
 export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): CitronBloomSceneHandle {
   const lod = options.lod ?? 'high';
-  
-  // Clone default graph to modify if needed
-  const graph = JSON.parse(JSON.stringify(DEFAULT_CITRON_BLOOM_GRAPH));
-  if (options.enableGroundMist === false) {
-    const mistNode = graph.nodes.find((n: any) => n.type === 'FogMist');
-    if (mistNode) mistNode.params.enable = false;
+
+  const graph: BloomSceneGraph = options.graph
+    ? options.graph
+    : JSON.parse(JSON.stringify(DEFAULT_CITRON_BLOOM_GRAPH));
+
+  if (!options.graph && options.enableGroundMist === false) {
+    const mistNode = graph.nodes.find((n: { type?: string }) => n.type === 'FogMist');
+    if (mistNode) mistNode.params = { ...mistNode.params, enable: false };
   }
 
   const builder = new BloomGraphBuilder(graph, lod);
@@ -50,6 +59,12 @@ export function createCitronBloomScene(options: CreateCitronBloomSceneOptions): 
     },
     setEnvMap(texture: Texture | null, intensity?: number) {
       builder.setEnvMap(texture, intensity);
+    },
+    syncEnvCamera(camera: Camera) {
+      builder.syncGlassPollenCamera(camera);
+    },
+    setPollenScrollDrive(gate01: number, journeyProgress01: number) {
+      builder.setPollenScrollDrive(gate01, journeyProgress01);
     },
     dispose() {
       builder.dispose();

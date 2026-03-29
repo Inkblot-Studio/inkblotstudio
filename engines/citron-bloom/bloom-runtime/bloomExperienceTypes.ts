@@ -33,6 +33,8 @@ export interface BloomExperienceScene {
   syncEnvCamera?(camera: Camera): void;
   /** Pass the studio IBL texture to custom ShaderMaterial objects that need it. */
   setEnvMap?(texture: Texture | null, intensity?: number): void;
+  /** Flower journey: glass pollen from scroll position (not speed). */
+  setPollenScrollDrive?(gate01: number, journeyProgress01: number): void;
 }
 
 export type BloomSceneFactory = (ctx: BloomSceneFactoryContext) => BloomExperienceScene;

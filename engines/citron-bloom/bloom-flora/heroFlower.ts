@@ -13,6 +13,7 @@ import {
 import heroPetalVert from './shaders/heroPetal.vert';
 import heroPetalFrag from './shaders/heroPetal.frag';
 import { createPetalGeometry } from './petalGeometry';
+import { HERO_RING_COLOR_PAIRS } from './heroFlowerPalette';
 import { HeroStem } from './heroStem';
 
 export interface HeroFlowerOptions {
@@ -46,14 +47,6 @@ const THETA_MAX = 1.08;
 const RING_TWIST = 0.513; // ~29.4°, irrational vs 360° / small N
 
 const TOTAL_PETALS = RINGS.reduce((s, r) => s + r.count, 0);
-
-const RING_COLORS: [Color, Color][] = [
-  [new Color('#7ee8b4'), new Color('#45cd85')],
-  [new Color('#45cd85'), new Color('#2db17a')],
-  [new Color('#2db17a'), new Color('#40b8d0')],
-  [new Color('#40b8d0'), new Color('#60a5fa')],
-  [new Color('#60a5fa'), new Color('#4589e6')],
-];
 
 function pseudoRandom(seed: number): number {
   const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
@@ -125,7 +118,7 @@ export class HeroFlower extends Group {
     for (let ri = 0; ri < RINGS.length; ri++) {
       const ring = RINGS[ri];
       const ringT = ri / (RINGS.length - 1);
-      const [c0, c1] = RING_COLORS[ri];
+      const [c0, c1] = HERO_RING_COLOR_PAIRS[ri];
 
       const twist = ri * RING_TWIST;
       const o = ring.openness;

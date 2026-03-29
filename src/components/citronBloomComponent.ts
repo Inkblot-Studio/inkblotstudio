@@ -66,6 +66,10 @@ export class CitronBloomComponent implements IComponent {
     this.host.setBloomFromScroll(clamp(scroll01, 0, 1));
   }
 
+  setPollenScrollDrive(gate01: number, journeyProgress01: number): void {
+    this.host.setPollenScrollDrive(gate01, journeyProgress01);
+  }
+
   applyBloomDrive(drive01: number): void {
     this.host.applyBloomDrive(clamp(drive01, 0, 1));
   }

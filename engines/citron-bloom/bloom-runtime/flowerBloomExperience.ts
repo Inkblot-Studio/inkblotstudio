@@ -3,6 +3,7 @@ import {
   createCitronBloomScene,
   type CitronBloomSceneHandle,
 } from '../examples/createCitronBloomScene';
+import { DEFAULT_CITRON_BLOOM_GRAPH, type BloomSceneGraph } from './bloomSceneGraph';
 import { FLOWER_EXPERIENCE_ROOT_Y } from './flowerStageConstants';
 import type { BloomSceneFactoryContext, BloomExperienceScene } from './bloomExperienceTypes';
 
@@ -51,13 +52,18 @@ function wrapFlowerHandle(handle: CitronBloomSceneHandle): BloomExperienceScene 
       const { main, branch, bud } = phasesFromDrive(drive01);
       handle.setBloomTarget(main, branch, bud);
     },
+    setPollenScrollDrive(gate01: number, journeyProgress01: number) {
+      handle.setPollenScrollDrive?.(gate01, journeyProgress01);
+    },
   };
 }
 
 const FLOWER_HERO_WORLD_SCALE = 6;
 
 export function createFlowerBloomExperience(ctx: BloomSceneFactoryContext): BloomExperienceScene {
-  const handle = createCitronBloomScene({ lod: ctx.lod });
+  const flowerGraph = JSON.parse(JSON.stringify(DEFAULT_CITRON_BLOOM_GRAPH)) as BloomSceneGraph;
+  flowerGraph.nodes.push({ id: 'glassPollen', type: 'GlassPollen' });
+  const handle = createCitronBloomScene({ lod: ctx.lod, graph: flowerGraph });
   handle.root.position.set(0, FLOWER_EXPERIENCE_ROOT_Y, 0);
   handle.root.scale.setScalar(FLOWER_HERO_WORLD_SCALE);
   return wrapFlowerHandle(handle);

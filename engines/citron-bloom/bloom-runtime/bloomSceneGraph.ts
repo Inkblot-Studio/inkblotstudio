@@ -1,19 +1,21 @@
-import { Group, type Texture, Vector3 } from 'three';
+import { Group, type Camera, type Texture, Vector3 } from 'three';
 import { catmullFromPoints, dnaHelixPoints } from '../bloom-curves/curveUtils';
 import { createDnaSpineMesh, updateDnaSpineTime, disposeDnaSpine } from '../bloom-curves/dnaSpine';
 import { InstancedMicroLeaves } from '../bloom-core/instancedMicroLeaves';
 import { BloomPhaseController } from '../bloom-flora/bloomPhase';
 import { createFlowerAmbientMotes } from '../bloom-flora/createFlowerAmbientMotes';
 import { createFlowerFogMistParticles } from '../bloom-flora/createFlowerFogMistParticles';
+import { createFlowerGlassPollen } from '../bloom-flora/createFlowerGlassPollen';
 import { FloralAssembly } from '../bloom-flora/floralAssembly';
 import { BLOOM_LOD_PROFILES, type BloomLod } from '../bloom-core/types';
 
-export type BloomNodeType = 
-  | 'FogMist' 
-  | 'AmbientMotes' 
-  | 'DnaSpine' 
-  | 'MicroLeaves' 
-  | 'FloralAssembly';
+export type BloomNodeType =
+  | 'FogMist'
+  | 'AmbientMotes'
+  | 'DnaSpine'
+  | 'MicroLeaves'
+  | 'FloralAssembly'
+  | 'GlassPollen';
 
 export interface BloomSceneNode {
   id: string;
@@ -38,6 +40,9 @@ export class BloomGraphBuilder {
   private spines: any[] = [];
   private leaves: any = null;
   private floral: any = null;
+  private glassPollen: ReturnType<typeof createFlowerGlassPollen> | null = null;
+  private pollenGate01 = 0;
+  private pollenProgress01 = 0;
   
   phaseMain = new BloomPhaseController({ smoothSpeed: 0.178, pulseSpeed: 0.32 });
   phaseBranch = new BloomPhaseController({ smoothSpeed: 0.165, pulseSpeed: 0.29 });
@@ -89,8 +94,22 @@ export class BloomGraphBuilder {
       } else if (node.type === 'FloralAssembly') {
         this.floral = new FloralAssembly({ profile }, [this.phaseMain, this.phaseBranch, this.phaseBud]);
         this.root.add(this.floral);
+      } else if (node.type === 'GlassPollen') {
+        const offset = node.params?.offset ?? [0, 0, 0];
+        this.glassPollen = createFlowerGlassPollen(lod);
+        this.glassPollen.group.position.set(offset[0], offset[1], offset[2]);
+        this.root.add(this.glassPollen.group);
       }
     }
+  }
+
+  setPollenScrollDrive(gate01: number, journeyProgress01: number) {
+    this.pollenGate01 = gate01;
+    this.pollenProgress01 = journeyProgress01;
+  }
+
+  syncGlassPollenCamera(camera: Camera) {
+    this.glassPollen?.syncCamera(camera);
   }
 
   update(delta: number, elapsed: number, wind: number) {
@@ -110,7 +129,15 @@ export class BloomGraphBuilder {
     if (this.leaves) this.leaves.update(elapsed);
     if (this.fogMist) this.fogMist.update(elapsed, delta, this.phaseMain.progress);
     if (this.ambientMotes) this.ambientMotes.update(elapsed, delta, this.phaseMain.progress);
-    
+
+    if (this.glassPollen) {
+      this.glassPollen.update(elapsed, delta, {
+        bloom01: this.phaseMain.progress,
+        journeyProgress01: this.pollenProgress01,
+        gate01: this.pollenGate01,
+      });
+    }
+
     if (this.floral) {
       if (this.fogMist) {
         const { phase, strength } = this.fogMist.getPetalRippleShimmer(elapsed);
@@ -133,6 +160,7 @@ export class BloomGraphBuilder {
 
   setEnvMap(texture: Texture | null, intensity?: number) {
     if (this.floral) this.floral.setEnvMap(texture, intensity);
+    if (this.glassPollen) this.glassPollen.setEnvMap(texture, intensity);
   }
 
   dispose() {
@@ -140,6 +168,7 @@ export class BloomGraphBuilder {
     if (this.ambientMotes) this.ambientMotes.dispose();
     for (const s of this.spines) disposeDnaSpine(s);
     if (this.leaves) this.leaves.dispose();
+    if (this.glassPollen) this.glassPollen.dispose();
     if (this.floral) this.floral.dispose();
     this.root.removeFromParent();
   }

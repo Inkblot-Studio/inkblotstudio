@@ -504,6 +504,22 @@ export class Inkblot {
       this.citronBloomComponent.setBloomFromScroll(this.scrollSystem.progress);
     }
 
+    if (this.citronBloomComponent && this.useCitronBloom && this.activeBloomExperienceId === 'flower') {
+      const j = resolveJourney(this.scrollSystem.progress);
+      /** No pollen at document top; gentle reveal and fade before act 0 ends. */
+      const scrollReveal = smoothstep(0.006, 0.08, j.globalT);
+      const sectionTail = j.section === 0 ? 1 - smoothstep(0.62, 0.97, j.localT) : 0;
+      const gate01 = sectionTail * scrollReveal;
+      /**
+       * Drive pollen intensity on act-0 local progress [0,1], not full-page scroll.
+       * Act 0 is only ~18% of global T — using global T kept opacity ramps near zero for the whole flower beat.
+       */
+      const pollenProgress01 = j.section === 0 ? j.localT : 0;
+      this.citronBloomComponent.setPollenScrollDrive(gate01, pollenProgress01);
+    } else if (this.citronBloomComponent) {
+      this.citronBloomComponent.setPollenScrollDrive(0, 0);
+    }
+
     for (const component of this.components) {
       component.update(this.frameContext);
     }
