@@ -488,10 +488,22 @@
 
       .nav-flow-svg path {
         fill: none;
-        stroke: url(#nav-flow-grad);
-        stroke-width: 1.2;
         stroke-linecap: round;
         stroke-linejoin: round;
+        transition: stroke 0.35s ease, stroke-width 0.35s ease, opacity 0.35s ease, filter 0.35s ease;
+      }
+
+      /* Idle: calm straight line (path is still driven by JS; flat when paused). */
+      body:not(.music-playing) .nav-flow-svg path {
+        stroke: color-mix(in srgb, #94a3b8 88%, #e2e8f0);
+        stroke-width: 2.15;
+        opacity: 0.88;
+        filter: none;
+      }
+
+      body.music-playing .nav-flow-svg path {
+        stroke: url(#nav-flow-grad);
+        stroke-width: 1.25;
         filter: drop-shadow(0 0 6px color-mix(in srgb, #f1f5f9 45%, transparent));
       }
 
@@ -503,33 +515,23 @@
         gap: 0.65rem;
         padding: 0.38rem 0.65rem;
         border-radius: 10px;
-        border: 1px solid color-mix(in srgb, #fff 22%, transparent);
-        outline: 1px solid color-mix(in srgb, #fff 10%, transparent);
+        border: 1px solid color-mix(in srgb, #fff 16%, transparent);
+        outline: 1px solid color-mix(in srgb, #fff 8%, transparent);
         outline-offset: 2px;
         background: color-mix(in srgb, #020617 72%, transparent);
-        opacity: 0;
-        transform: translateY(-8px) scale(0.98);
-        max-height: 0;
-        margin-top: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-        overflow: hidden;
-        pointer-events: none;
+        opacity: 0.48;
+        transform: translateY(0) scale(1);
+        max-height: 56px;
+        pointer-events: auto;
         transition:
           opacity 0.4s ease,
-          transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-          max-height 0.45s ease,
-          margin-top 0.45s ease,
-          padding 0.45s ease;
+          border-color 0.35s ease,
+          transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       body.audio-active .nav-mini-player {
         opacity: 1;
-        transform: translateY(0) scale(1);
-        max-height: 56px;
-        margin-top: 0.45rem;
-        padding: 0.38rem 0.65rem;
-        pointer-events: auto;
+        border-color: color-mix(in srgb, #fff 26%, transparent);
       }
 
       .nav-mini-btn {
@@ -1667,8 +1669,9 @@
                 type="button"
                 class="nav-flow-hit"
                 id="nav-audio-toggle"
-                aria-label="Toggle ambient audio"
+                aria-label="Play or pause soundtrack"
                 aria-pressed="false"
+                title="Idle: straight line. Playing: live waveform. Side curtains pulse with the track."
               >
                 <span class="nav-flow-wrap">
                   <svg class="nav-flow-svg" viewBox="0 0 220 24" preserveAspectRatio="xMidYMid meet" aria-hidden="true">

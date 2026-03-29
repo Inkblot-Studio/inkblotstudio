@@ -29,11 +29,11 @@ export function initNavChrome(audio: AudioSystem): void {
   });
   document.getElementById('nav-mini-prev')?.addEventListener('click', (e) => {
     e.preventDefault();
-    if (audio.isPlaying) audio.prevTrack();
+    audio.prevTrack();
   });
   document.getElementById('nav-mini-next')?.addEventListener('click', (e) => {
     e.preventDefault();
-    if (audio.isPlaying) audio.nextTrack();
+    audio.nextTrack();
   });
 }
 
@@ -81,6 +81,7 @@ export function updateNavChrome(
   root.style.setProperty('--nav-warp', warp.toFixed(4));
   root.style.setProperty('--nav-dir', String(scroll.scrollDirection));
   document.body.classList.toggle('audio-active', audio.isPlaying);
+  document.body.classList.toggle('music-playing', audio.isPlaying);
 
   const audioToggle = document.getElementById('nav-audio-toggle');
   if (audioToggle) {

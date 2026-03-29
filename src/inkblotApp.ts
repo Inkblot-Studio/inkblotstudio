@@ -10,6 +10,7 @@ import { AnimationSystem } from '@/systems/animationSystem';
 import { AudioSystem } from '@/systems/audioSystem';
 import { FluidFlowerComponent } from '@/components/fluidFlower';
 import { CitronBloomComponent } from '@/components/citronBloomComponent';
+import { SideCurtainParticlesComponent } from '@/components/sideCurtainParticles';
 import { Sections3DComponent } from '@/components/sections3D';
 import type { FrameContext, ISystem, IComponent } from '@/types';
 import { smoothstep } from '@/utils/math';
@@ -131,6 +132,7 @@ export class Inkblot {
   private readonly bloomSwap = new BloomExperienceSwapController();
   private studioEnvironment: StudioEnvironmentHandle | null = null;
   private liquidRibbon: PointerLiquidRibbonHandle | null = null;
+  private sideCurtainParticles: SideCurtainParticlesComponent | null = null;
 
   constructor(container: HTMLElement) {
     const { active: useCitronBloom, lod: citronBloomLod } = parseCitronBloomMode();
@@ -214,6 +216,11 @@ export class Inkblot {
         this.interactionSystem,
       );
       this.components.push(this.citronBloomComponent);
+      this.sideCurtainParticles = new SideCurtainParticlesComponent(
+        () => this.useCitronBloom && this.activeBloomExperienceId === 'flower',
+        this.citronBloomLod,
+      );
+      this.components.push(this.sideCurtainParticles);
     } else {
       this.fluidFlowerComponent = new FluidFlowerComponent();
       this.sections3DComponent = new Sections3DComponent();
@@ -244,12 +251,17 @@ export class Inkblot {
       this.postprocessing.init(this.renderer.instance);
     }
 
+    /** Camera must live in the scene graph so children (e.g. side-curtain Points) are rendered. */
+    this.scene.instance.add(this.camera.instance);
+
     for (const system of this.systems) {
       system.init(this.frameContext);
     }
     for (const component of this.components) {
       component.init(this.frameContext);
     }
+
+    this.sideCurtainParticles?.setAudioSystem(this.audioSystem);
 
     if (this.useCitronBloom && this.citronBloomComponent) {
       this.animationSystem.setMode(this.citronBloomComponent.getCameraMode());
@@ -641,6 +653,8 @@ export class Inkblot {
 
     this.liquidRibbon?.dispose();
     this.liquidRibbon = null;
+
+    this.camera.instance.removeFromParent();
 
     this.postprocessing.dispose();
     this.controls.dispose();

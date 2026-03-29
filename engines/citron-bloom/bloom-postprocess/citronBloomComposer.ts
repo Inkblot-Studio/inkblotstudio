@@ -16,6 +16,8 @@ const colorGradeShader = {
     uSaturation: { value: 1.12 },
     uWarmth: { value: -0.035 },
     uVignette: { value: 0.35 },
+    /** Corrects vignette to circular in screen space (width / height). */
+    uVignetteAspect: { value: 1.0 },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -30,6 +32,7 @@ const colorGradeShader = {
     uniform float uSaturation;
     uniform float uWarmth;
     uniform float uVignette;
+    uniform float uVignetteAspect;
     varying vec2 vUv;
     void main() {
       vec4 c = texture2D(tDiffuse, vUv);
@@ -39,7 +42,9 @@ const colorGradeShader = {
       col = mix(vec3(l), col, uSaturation);
       col.r += uWarmth * 0.06;
       col.b -= uWarmth * 0.08;
-      float vig = distance(vUv, vec2(0.5)) * uVignette;
+      vec2 vp = vUv - vec2(0.5);
+      vp.x *= uVignetteAspect;
+      float vig = length(vp) * uVignette;
       col *= 1.0 - vig * vig;
       gl_FragColor = vec4(col, c.a);
     }
@@ -90,6 +95,8 @@ export interface CitronBloomComposerOptions {
   gradeWarmth?: number;
   /** Vignette strength multiplier (default 0.35). */
   gradeVignette?: number;
+  /** Initial aspect ratio for vignette (width / height); updated in {@link resize}. */
+  gradeVignetteAspect?: number;
 }
 
 /** Drives {@link CitronBloomComposer.setJourneyVisual} from scroll journey + bloom experience id. */
@@ -171,6 +178,8 @@ export class CitronBloomComposer {
     this.gradePass.uniforms.uSaturation.value = this.options.gradeSaturation ?? 1.12;
     this.gradePass.uniforms.uWarmth.value = this.options.gradeWarmth ?? -0.035;
     this.gradePass.uniforms.uVignette.value = this.options.gradeVignette ?? 0.35;
+    this.gradePass.uniforms.uVignetteAspect.value =
+      this.options.gradeVignetteAspect ?? w / Math.max(1, h);
     this.composer.addPass(this.gradePass);
 
     this.filmPass = new FilmPass(this.options.filmIntensity ?? 0.006, false);
@@ -251,6 +260,10 @@ export class CitronBloomComposer {
     this.composer.setSize(width, height);
     this.composer.setPixelRatio(pixelRatio);
     this.bloomPass.setSize(width, height);
+    const h = Math.max(1, height * pixelRatio);
+    const w = Math.max(1, width * pixelRatio);
+    (this.gradePass.uniforms as { uVignetteAspect: { value: number } }).uVignetteAspect.value =
+      w / h;
   }
 
   setBloomStrength(n: number): void {

@@ -30,6 +30,6 @@ export function citronBloomComposerOptionsForFlowerExperience(lod: BloomLod): Ci
     gradeContrast: 1.04,
     gradeSaturation: 1.07,
     gradeWarmth: 0,
-    gradeVignette: 0.14,
+    gradeVignette: 0.3,
   };
 }
