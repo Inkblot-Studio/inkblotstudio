@@ -207,6 +207,7 @@ export class HeroFlower extends Group {
   setEnvMap(texture: Texture | null, intensity = 1.5): void {
     this.petalMat.uniforms.uEnvMap.value = texture;
     this.petalMat.uniforms.uEnvMapIntensity.value = texture ? intensity : 0;
+    this.stem.setEnvMap(texture, intensity);
   }
 
   update(elapsed: number): void {

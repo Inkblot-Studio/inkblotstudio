@@ -25,6 +25,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
+    "src/**/*.d.ts",
     "engines/**/*.ts",
     "engines/**/*.tsx",
     "engines/**/*.d.ts"

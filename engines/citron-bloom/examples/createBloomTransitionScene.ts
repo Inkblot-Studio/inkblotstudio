@@ -9,12 +9,10 @@ import {
   Scene,
 } from 'three';
 import type { Camera } from 'three';
+import ibmPlexMonoFontUrl from '@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff?url';
 import { Text } from 'troika-three-text';
 import { createGlassMaterial } from '../bloom-core/glassMaterialFactory';
 import { createCinematicLighting } from '../bloom-core/sceneLighting';
-
-const IBM_PLEX_MONO =
-  'https://fonts.gstatic.com/s/ibmplexmono/v19/jMAS9GvGsKxCA-WtwUKzsL_jdstr.woff2';
 
 export interface BloomTransitionSceneHandle {
   readonly scene: Scene;
@@ -36,7 +34,7 @@ function makeLabel(
   t.color = color;
   t.anchorX = anchorX;
   t.anchorY = 'top';
-  t.font = IBM_PLEX_MONO;
+  t.font = ibmPlexMonoFontUrl;
   t.material = new MeshBasicMaterial({
     color,
     transparent: true,

@@ -18,14 +18,19 @@ export class InteractionSystem implements ISystem {
   /** Damped pointer in normalised device coordinates [-1, 1]. */
   readonly pointer = new Vector2(0, 0);
 
-  /** Raw (un-damped) pointer position. */
-  private readonly rawPointer = new Vector2(0, 0);
+  /** Raw NDC from the last pointer event — use for trails/cursors that should track the cursor tightly. */
+  readonly rawPointer = new Vector2(0, 0);
 
   /** Velocity magnitude of the pointer. */
   public pointerVelocity = 0;
 
+  /** NDC/sec from raw pointer motion (less smoothed than {@link pointerVelocity}) — better for VFX width. */
+  public pointerVelocityRaw = 0;
+
   readonly raycaster = new Raycaster();
   private readonly dampFactor = 5;
+  private readonly prevRawPointer = new Vector2(0, 0);
+  private hasPrevRaw = false;
 
   init(_ctx: FrameContext): void {
     window.addEventListener('pointermove', this.onPointerMove, { passive: true });
@@ -38,13 +43,22 @@ export class InteractionSystem implements ISystem {
     this.pointer.x = damp(this.pointer.x, this.rawPointer.x, this.dampFactor, ctx.delta);
     this.pointer.y = damp(this.pointer.y, this.rawPointer.y, this.dampFactor, ctx.delta);
 
-    // Calculate instantaneous velocity
+    // Calculate instantaneous velocity (smoothed pointer — slow for ribbon thickness)
     const dx = this.pointer.x - prevX;
     const dy = this.pointer.y - prevY;
     const vel = Math.sqrt(dx * dx + dy * dy) / Math.max(ctx.delta, 0.001);
-    
-    // Damp the velocity value itself so particles react smoothly
     this.pointerVelocity = damp(this.pointerVelocity, vel, 2, ctx.delta);
+
+    // Raw NDC delta per second — spikes on real cursor movement
+    let rawVel = 0;
+    if (this.hasPrevRaw) {
+      const rdx = this.rawPointer.x - this.prevRawPointer.x;
+      const rdy = this.rawPointer.y - this.prevRawPointer.y;
+      rawVel = Math.sqrt(rdx * rdx + rdy * rdy) / Math.max(ctx.delta, 0.001);
+    }
+    this.prevRawPointer.copy(this.rawPointer);
+    this.hasPrevRaw = true;
+    this.pointerVelocityRaw = damp(this.pointerVelocityRaw, rawVel, 8, ctx.delta);
 
     this.raycaster.setFromCamera(this.pointer, ctx.camera);
   }

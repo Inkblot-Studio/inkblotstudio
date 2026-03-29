@@ -26,9 +26,9 @@ import {
   FLOWER_GROUND_PLANE_WORLD_Y,
 } from '@citron-bloom-engine/bloom-runtime/flowerStageConstants';
 import {
-  createPointerGlassShards,
-  type PointerGlassShardsHandle,
-} from '@citron-bloom-engine/bloom-flora/createPointerGlassShards';
+  createPointerLiquidRibbon,
+  type PointerLiquidRibbonHandle,
+} from '@citron-bloom-engine/bloom-flora/createPointerLiquidRibbon';
 import {
   citronBloomComposerOptionsForFlowerExperience,
   citronBloomComposerOptionsForLod,
@@ -130,7 +130,7 @@ export class Inkblot {
   private transitionSceneHandle: BloomTransitionSceneHandle | null = null;
   private readonly bloomSwap = new BloomExperienceSwapController();
   private studioEnvironment: StudioEnvironmentHandle | null = null;
-  private glassShards: PointerGlassShardsHandle | null = null;
+  private liquidRibbon: PointerLiquidRibbonHandle | null = null;
 
   constructor(container: HTMLElement) {
     const { active: useCitronBloom, lod: citronBloomLod } = parseCitronBloomMode();
@@ -262,8 +262,8 @@ export class Inkblot {
     }
 
     if (this.useCitronBloom) {
-      this.glassShards = createPointerGlassShards(this.citronBloomLod);
-      this.scene.instance.add(this.glassShards.group);
+      this.liquidRibbon = createPointerLiquidRibbon();
+      this.scene.instance.add(this.liquidRibbon.group);
     }
 
     initNavChrome(this.audioSystem);
@@ -577,14 +577,15 @@ export class Inkblot {
       shardJourneySection = resolveJourney(this.scrollSystem.progress).section;
     }
 
-    this.glassShards?.update({
+    this.liquidRibbon?.update({
       elapsed,
       delta,
       camera: this.camera.instance,
-      pointerNdc: this.interactionSystem.pointer,
-      pointerVelocityNdc: this.interactionSystem.pointerVelocity,
+      pointerNdc: this.interactionSystem.rawPointer,
+      pointerVelocityNdc: this.interactionSystem.pointerVelocityRaw,
       enabled: this.useCitronBloom,
       journeySection: shardJourneySection,
+      scene: this.scene.instance,
     });
 
     this.postprocessing.render(
@@ -625,8 +626,8 @@ export class Inkblot {
     this.studioEnvironment?.dispose();
     this.studioEnvironment = null;
 
-    this.glassShards?.dispose();
-    this.glassShards = null;
+    this.liquidRibbon?.dispose();
+    this.liquidRibbon = null;
 
     this.postprocessing.dispose();
     this.controls.dispose();
