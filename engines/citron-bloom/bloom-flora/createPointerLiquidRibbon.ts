@@ -30,11 +30,19 @@ export interface PointerLiquidRibbonHandle {
   dispose(): void;
 }
 
-const POINTS_COUNT = 40;
+/** Short trail — few segments */
+const POINTS_COUNT = 8;
 const RADIAL_SEGS = 6;
-/** Looser springs + a touch more damping = silkier, less twitchy trail */
-const SPRING_K = 165;
-const DAMPING = 21;
+/** Followers: base spring/damp (scaled per-frame by pointer “stress”) */
+const SPRING_K = 128;
+const DAMPING = 17.5;
+/** Head: chases pointer with damping (no snap) */
+const HEAD_SPRING_K = 158;
+const HEAD_DAMPING = 19;
+/** Max dt per physics sub-step — large frame gaps won’t explode the integrator */
+const PHYSICS_STEP_MAX = 1 / 200;
+/** Pointer speed (NDC/s) above this ramps in extra smoothing — keeps fast swipes fluid */
+const POINTER_STRESS_REF = 72;
 const BASE_RADIUS = 0.095;
 const RADIUS_VEL_FLOOR = 0.42;
 /** World distance along the ray — further back reads smaller and less “in your face”. */
@@ -70,8 +78,8 @@ void main() {
   float ndv = clamp(abs(dot(N, V)), 0.0, 1.0);
   float rim = pow(1.0 - ndv, 2.0);
   float along = vUv.y;
-  float headBright = 1.0 - smoothstep(0.0, 0.22, along);
-  float tailFade = 1.0 - smoothstep(0.52, 1.0, along);
+  float headBright = 1.0 - smoothstep(0.0, 0.12, along);
+  float tailFade = 1.0 - smoothstep(0.22, 0.48, along);
   float body = 0.22 + 0.78 * tailFade;
   float pulse = 0.9 + 0.1 * sin(uTime * 2.6 + along * 8.0);
   vec3 rgb = mix(uCore, uColor, rim) * pulse;
@@ -208,28 +216,43 @@ export function createPointerLiquidRibbon(): PointerLiquidRibbonHandle {
         initialized = true;
       }
 
-      points[0].copy(target);
-      for (let i = 1; i < POINTS_COUNT; i++) {
-        const current = points[i];
-        const ahead = points[i - 1];
-        const vel = vels[i];
+      const stress = Math.min(1, (pointerVelocityNdc / POINTER_STRESS_REF) ** 2);
+      const kBody = SPRING_K * (1 - 0.5 * stress);
+      const dBody = DAMPING * (1 + 1.35 * stress);
+      const kHead = HEAD_SPRING_K * (1 - 0.18 * stress);
+      const dHead = HEAD_DAMPING * (1 + 0.55 * stress);
 
-        const fx = (ahead.x - current.x) * SPRING_K - vel.x * DAMPING;
-        const fy = (ahead.y - current.y) * SPRING_K - vel.y * DAMPING;
-        const fz = (ahead.z - current.z) * SPRING_K - vel.z * DAMPING;
+      const cappedDelta = Math.min(delta, 0.08);
+      const nSteps = Math.min(14, Math.max(1, Math.ceil(cappedDelta / PHYSICS_STEP_MAX)));
+      const h = cappedDelta / nSteps;
 
-        vel.x += fx * delta;
-        vel.y += fy * delta;
-        vel.z += fz * delta;
+      for (let step = 0; step < nSteps; step++) {
+        for (let i = 0; i < POINTS_COUNT; i++) {
+          const current = points[i];
+          const vel = vels[i];
+          const ax = i === 0 ? target.x : points[i - 1].x;
+          const ay = i === 0 ? target.y : points[i - 1].y;
+          const az = i === 0 ? target.z : points[i - 1].z;
+          const k = i === 0 ? kHead : kBody;
+          const d = i === 0 ? dHead : dBody;
 
-        current.x += vel.x * delta;
-        current.y += vel.y * delta;
-        current.z += vel.z * delta;
+          const fx = (ax - current.x) * k - vel.x * d;
+          const fy = (ay - current.y) * k - vel.y * d;
+          const fz = (az - current.z) * k - vel.z * d;
+
+          vel.x += fx * h;
+          vel.y += fy * h;
+          vel.z += fz * h;
+
+          current.x += vel.x * h;
+          current.y += vel.y * h;
+          current.z += vel.z * h;
+        }
       }
 
       const velScale = Math.max(
         RADIUS_VEL_FLOOR,
-        Math.min(0.92, 0.12 + pointerVelocityNdc * 0.028),
+        Math.min(0.82, 0.12 + Math.sqrt(pointerVelocityNdc * 0.45) * 0.018),
       );
 
       for (let i = 0; i < POINTS_COUNT; i++) {
@@ -261,7 +284,7 @@ export function createPointerLiquidRibbon(): PointerLiquidRibbonHandle {
         _n.crossVectors(_b, _dir).normalize();
 
         const t = i / rowMax;
-        const radius = BASE_RADIUS * (1 - Math.pow(t, 1.15)) * velScale;
+        const radius = BASE_RADIUS * (1 - Math.pow(t, 2.45)) * velScale;
         const vAlong = i / rowMax;
 
         let vi = i * cols;
