@@ -1,0 +1,383 @@
+/* Full-viewport contact route; warm flat shell tokens aligned with .site-drawer */
+.contact-page {
+  --cp-paper: #f0ede8;
+  --cp-ink: #1a1812;
+  --cp-ink-muted: #6b645c;
+  --cp-muted: #8a827a;
+  --cp-line: rgba(26, 24, 18, 0.14);
+  --cp-spring: cubic-bezier(0.25, 0.48, 0.35, 0.99);
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right))
+    max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: color-mix(in srgb, var(--cp-paper) 98%, #fff 2%);
+  color: var(--cp-ink);
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.contact-page--enter {
+  animation: contactPageIn 0.65s var(--cp-spring) both;
+}
+
+@keyframes contactPageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-page--enter {
+    animation: none;
+  }
+}
+
+.contact-page__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 36rem;
+  margin: 0;
+  padding: 1.5rem 1.25rem 2rem;
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.contact-page__close {
+  position: fixed;
+  top: max(0.45rem, env(safe-area-inset-top));
+  right: max(0.45rem, env(safe-area-inset-right));
+  z-index: 4;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--cp-ink-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.25s var(--cp-spring);
+}
+
+.contact-page__close:hover,
+.contact-page__close:focus-visible {
+  color: var(--cp-ink);
+  outline: none;
+}
+
+.contact-page__hero {
+  margin: 0 0 0.2rem;
+  max-width: 22ch;
+  align-self: center;
+  text-align: center;
+}
+
+.contact-page__hero-line {
+  display: block;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(2rem, 5.5vw, 2.85rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  color: var(--cp-ink);
+}
+
+.contact-page__kicker {
+  margin: 0.65rem 0 1.1rem;
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cp-muted);
+}
+
+.contact-page__mail {
+  margin: 0 0 1.25rem;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: clamp(0.88rem, 1.2vw, 0.95rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--cp-ink);
+}
+
+.contact-page__mail a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--cp-line);
+  transition: border-color 0.25s var(--cp-spring);
+}
+
+.contact-page__mail a:hover,
+.contact-page__mail a:focus-visible {
+  border-bottom-color: var(--cp-ink);
+  outline: none;
+}
+
+.contact-page__intents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.65rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.contact-page__intent {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cp-ink);
+  background: var(--cp-paper);
+  border: 1px solid var(--cp-line);
+  border-radius: 0;
+  padding: 0.5rem 0.9rem 0.45rem;
+  cursor: pointer;
+  transition: background 0.25s var(--cp-spring), border-color 0.25s var(--cp-spring);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.contact-page__intent:hover,
+.contact-page__intent:focus-visible {
+  background: #fff;
+  border-color: color-mix(in srgb, var(--cp-ink) 15%, var(--cp-line) 85%);
+  outline: none;
+}
+
+.contact-page__intent[aria-pressed='true'] {
+  background: var(--cp-ink);
+  color: var(--cp-paper);
+  border-color: var(--cp-ink);
+}
+
+.contact-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  text-align: left;
+  width: 100%;
+  max-width: 28rem;
+}
+
+.contact-page__label {
+  display: block;
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cp-muted);
+  margin-bottom: 0.2rem;
+}
+
+.contact-page__input,
+.contact-page__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: var(--cp-ink);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--cp-line);
+  border-radius: 0;
+  transition: border-color 0.25s var(--cp-spring);
+}
+
+.contact-page__textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+  line-height: 1.45;
+  padding-top: 0.4rem;
+}
+
+.contact-page__input::placeholder,
+.contact-page__textarea::placeholder {
+  color: color-mix(in srgb, var(--cp-muted) 75%, var(--cp-paper) 25%);
+}
+
+.contact-page__input:hover,
+.contact-page__textarea:hover {
+  border-bottom-color: color-mix(in srgb, var(--cp-ink) 20%, var(--cp-line) 80%);
+}
+
+.contact-page__input:focus,
+.contact-page__textarea:focus {
+  outline: none;
+  border-bottom-color: var(--cp-ink);
+}
+
+.contact-page__input--invalid,
+.contact-page__textarea--invalid {
+  border-bottom-color: color-mix(in srgb, #9b1c1c 70%, var(--cp-line) 30%) !important;
+}
+
+.contact-page__error {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #9b1c1c;
+  margin: 0;
+  min-height: 1.1em;
+}
+
+.contact-page__error[hidden] {
+  display: none;
+}
+
+.contact-page__submit {
+  align-self: center;
+  margin-top: 0.2rem;
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--cp-paper);
+  background: var(--cp-ink);
+  border: 1px solid var(--cp-ink);
+  border-radius: 0;
+  padding: 0.6rem 1.3rem 0.55rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.25s var(--cp-spring), opacity 0.2s;
+}
+
+.contact-page__submit:hover:not(:disabled) {
+  background: #2a2420;
+  border-color: #2a2420;
+}
+
+.contact-page__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.contact-page__send-busy {
+  display: none;
+}
+
+.contact-page--sending .contact-page__send-label {
+  display: none;
+}
+
+.contact-page--sending .contact-page__send-busy {
+  display: inline;
+}
+
+.contact-page__views {
+  position: relative;
+  min-width: 0;
+  min-height: 11rem;
+  width: 100%;
+  max-width: 28rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.contact-page--success .contact-page__form {
+  display: none;
+}
+
+.contact-page__success {
+  display: none;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  text-align: center;
+  align-items: center;
+  width: 100%;
+}
+
+.contact-page--success .contact-page__success {
+  display: flex;
+  animation: contactPageSuccess 0.45s var(--cp-spring) both;
+}
+
+@keyframes contactPageSuccess {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-page--success .contact-page__success {
+    animation: none;
+  }
+}
+
+.contact-page__success-k {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--cp-muted);
+  margin: 0;
+}
+
+.contact-page__success-t {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 32ch;
+}
+
+.contact-page__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.contact-page-open {
+  overflow: hidden;
+}
+
+body.contact-page-open #canvas-container,
+body.contact-page-open .journey-scene-frame {
+  transition: opacity 0.5s var(--cp-spring);
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.contact-page-open #canvas-container,
+  body.contact-page-open .journey-scene-frame {
+    transition: opacity 0.2s ease;
+  }
+  body.contact-page-open #canvas-container,
+  body.contact-page-open .journey-scene-frame {
+    opacity: 0.95;
+  }
+}

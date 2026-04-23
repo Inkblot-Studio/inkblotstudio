@@ -1,0 +1,82 @@
+/* Tactical blooms: fixed in viewport, behind copy, never trap pointer events */
+.contact-page__bloom-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.contact-bloom,
+.contact-page__bloom {
+  position: absolute;
+  color: color-mix(in srgb, var(--cp-ink) 11%, var(--cp-paper) 89%);
+  pointer-events: none;
+}
+
+.contact-bloom__core,
+.contact-bloom .contact-bloom__core {
+  opacity: 0.35;
+}
+
+/* Sizes + positions (percent of overlay, bloom-scene is full viewport) */
+.contact-page__bloom--a {
+  width: min(5.5rem, 14vw);
+  height: min(5.5rem, 14vw);
+  top: 8%;
+  left: 6%;
+  opacity: 0.9;
+  transform: rotate(-8deg);
+}
+
+.contact-page__bloom--b {
+  width: min(3.5rem, 9vw);
+  height: min(3.5rem, 9vw);
+  top: 18%;
+  right: 12%;
+  opacity: 0.75;
+  transform: rotate(14deg);
+}
+
+.contact-page__bloom--c {
+  width: min(4.8rem, 12vw);
+  height: min(4.8rem, 12vw);
+  left: 4%;
+  bottom: 16%;
+  opacity: 0.85;
+  transform: rotate(22deg);
+}
+
+.contact-page__bloom--d {
+  width: min(3.2rem, 8vw);
+  height: min(3.2rem, 8vw);
+  right: 8%;
+  bottom: 22%;
+  opacity: 0.7;
+  transform: rotate(-18deg);
+}
+
+/* Mid-field, upper third — “guardian” at journey heart height */
+.contact-page__bloom--e {
+  width: min(2.6rem, 7vw);
+  height: min(2.6rem, 7vw);
+  top: 42%;
+  right: 20%;
+  opacity: 0.55;
+  transform: rotate(6deg);
+}
+
+@media (max-width: 520px) {
+  .contact-page__bloom--b {
+    right: 3%;
+  }
+  .contact-page__bloom--e {
+    right: 8%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-page__bloom {
+    transform: none;
+  }
+}
