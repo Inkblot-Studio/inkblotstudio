@@ -7,6 +7,7 @@ import {
   SRGBColorSpace,
   Sprite,
   SpriteMaterial,
+  type Vector2,
 } from 'three';
 import type { JourneyState } from '@/journey/sectionMap';
 import { damp, smoothstep } from '@/utils/math';
@@ -14,35 +15,37 @@ import type { FrameContext, IComponent } from '@/types';
 import type { InteractionSystem } from '@/systems/interactionSystem';
 
 const CALLOUT = "Ready for what's next?";
+/** Splits the line for per-segment light (keeps “what’s” intact). */
+const CALLOUT_PARTS: readonly string[] = CALLOUT.split(/(\s+)/);
 /**
  * Local space in front of the camera: +Y up, −Z into the scene (toward the flower).
  * Parenting the copy to the camera keeps it from swimming when the world/camera orbits.
  */
-const CAM_LOCAL = { x: 0, y: 0.32, z: -4.25 } as const;
+const CAM_LOCAL = { x: 0, y: 0.46, z: -4.25 } as const;
 
 const CANVAS_W = 2200;
 const CANVAS_H = 520;
-/** World-space width in front of the camera; ~40% of the previous default for lighter framing. */
 const BASE_WIDTH = 7.85 * 0.4;
 
-/**
- * Canvas sprite, camera-parented (stable in the view while the flower moves) + pointer hover.
- */
+const ICE = { r: 125, g: 211, b: 252 };
+const MIST = { r: 240, g: 249, b: 255 };
+
 export class FlowerCalloutTextComponent implements IComponent {
   readonly group = new Group();
   private sprite: Sprite | null = null;
   private material: SpriteMaterial | null = null;
   private map: CanvasTexture | null = null;
+  private canvas2d: CanvasRenderingContext2D | null = null;
   private journey: JourneyState | null = null;
   private domEl: HTMLElement | null = null;
   private hoverSm = 0;
-  /** Smoothed [0,1] from scroll speed — drives subtle scale/brightness. */
   private scrollSm = 0;
   private readonly ray = new Raycaster();
-  private readonly colorIdle = new Color(0xf0f9ff);
-  private readonly colorHover = new Color(0x7dd3fc);
-  private readonly colorScrollBoost = new Color(0xf8fafc);
+  /** Damped pointer in canvas space (px). */
+  private ptrX = CANVAS_W * 0.5;
+  private ptrY = CANVAS_H * 0.5;
   private reducedMotion = false;
+  private baseFontSizePx = 100;
 
   constructor(
     private readonly isFlowerExperience: () => boolean,
@@ -56,42 +59,118 @@ export class FlowerCalloutTextComponent implements IComponent {
     this.journey = state;
   }
 
-  private static drawToCanvas(
-    ctx2d: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-    forOpacity = 1,
-  ): void {
-    const g = forOpacity;
-    ctx2d.clearRect(0, 0, w, h);
-    ctx2d.textAlign = 'center';
-    ctx2d.textBaseline = 'middle';
-    const cx = (w * 0.5) | 0;
-    const cy = (h * 0.5) | 0;
-    ctx2d.imageSmoothingEnabled = true;
-    if ('imageSmoothingQuality' in ctx2d) {
-      ctx2d.imageSmoothingQuality = 'high';
-    }
-    const basePx = Math.round(100 * (w / 2200));
-    const font = `600 ${basePx}px "Syne", "Outfit", "Fraunces", system-ui, sans-serif`;
-    ctx2d.font = font;
+  private buildFont(): string {
+    return `600 ${this.baseFontSizePx}px "Syne", "Outfit", "Fraunces", system-ui, sans-serif`;
+  }
+
+  private pickFont(graphics: CanvasRenderingContext2D, w: number, h: number): void {
+    this.baseFontSizePx = Math.round(100 * (w / 2200));
+    graphics.font = this.buildFont();
     const pad = 12;
     const maxW = w - pad * 2;
-    if (ctx2d.measureText(CALLOUT).width > maxW) {
-      const scale = maxW / ctx2d.measureText(CALLOUT).width;
-      const fs = Math.max(36, Math.round(basePx * scale));
-      ctx2d.font = `600 ${fs}px "Syne", "Outfit", "Fraunces", system-ui, sans-serif`;
+    if (graphics.measureText(CALLOUT).width > maxW) {
+      const scale = maxW / graphics.measureText(CALLOUT).width;
+      this.baseFontSizePx = Math.max(36, Math.round(100 * (w / 2200) * scale));
     }
-    ctx2d.lineJoin = 'round';
-    ctx2d.miterLimit = 2;
-    /* Fill + soft shadow only: strokeText draws interior paths in counters and reads as “seams”. */
-    ctx2d.shadowColor = `rgba(2,6,23,${0.92 * g})`;
-    ctx2d.shadowBlur = 20 * g;
-    ctx2d.shadowOffsetX = 0;
-    ctx2d.shadowOffsetY = 0;
-    ctx2d.fillStyle = `rgba(240,249,255,${0.99 * g})`;
-    ctx2d.fillText(CALLOUT, cx, cy);
-    ctx2d.shadowBlur = 0;
+    graphics.font = this.buildFont();
+  }
+
+  private drawToCanvas(
+    g: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    vis: number,
+    pointerCanvas: { x: number; y: number } | null,
+    onSprite: number,
+    elapsed: number,
+    scrollSm: number,
+  ): void {
+    const alpha = vis;
+    g.clearRect(0, 0, w, h);
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    g.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in g) {
+      g.imageSmoothingQuality = 'high';
+    }
+    g.lineJoin = 'round';
+    g.miterLimit = 2;
+
+    this.pickFont(g, w, h);
+    const cy = (h * 0.5) | 0;
+    const fs = this.baseFontSizePx;
+
+    let totalW = 0;
+    for (const p of CALLOUT_PARTS) {
+      totalW += g.measureText(p).width;
+    }
+    let x0 = 0.5 * w - 0.5 * totalW;
+    if (x0 < 8) {
+      x0 = 8;
+    }
+
+    const onMark = pointerCanvas !== null && onSprite > 0.1;
+    const doRipple = onMark && !this.reducedMotion;
+    const px = this.ptrX;
+    const py = this.ptrY;
+    if (doRipple) {
+      const breath = 0.88 + 0.12 * Math.sin(elapsed * 1.65);
+      const rBase = 44 + 18 * breath;
+      g.save();
+      g.globalCompositeOperation = 'screen';
+      for (const ring of [0.45, 0.8, 1] as const) {
+        const rad = rBase * ring;
+        const a = 0.038 * (1.15 - ring * 0.5) * onSprite * alpha;
+        const grd = g.createRadialGradient(px, py, 0, px, py, rad);
+        grd.addColorStop(0, `rgba(125,211,252,${a * 0.45})`);
+        grd.addColorStop(0.5, `rgba(125,211,252,${a * 0.16})`);
+        grd.addColorStop(1, 'rgba(125,211,252,0)');
+        g.fillStyle = grd;
+        g.fillRect(0, 0, w, h);
+      }
+      g.restore();
+    }
+
+    let x = x0;
+    for (const part of CALLOUT_PARTS) {
+      const m = g.measureText(part);
+      const partW = m.width;
+      if (part.trim() === '') {
+        x += partW;
+        continue;
+      }
+
+      const xL = x;
+      const xR = x + partW;
+      const yT = cy - fs * 0.42;
+      const yB = cy + fs * 0.42;
+      const cxB = 0.5 * (xL + xR);
+      const cyB = 0.5 * (yT + yB);
+      const dx = Math.max(xL, Math.min(px, xR)) - px;
+      const dy = Math.max(yT, Math.min(py, yB)) - py;
+      const dEdge = onMark
+        ? Math.hypot(dx, dy)
+        : 9999;
+      const dCenter = onMark ? Math.hypot(px - cxB, py - cyB) : 9999;
+      const d = Math.min(dEdge, dCenter);
+      const sigma = fs * 0.95;
+      const localGlow = onMark
+        ? Math.max(0, Math.exp(-(d * d) / (2 * sigma * sigma)) * onSprite * alpha)
+        : 0;
+      const mix = Math.min(1, 0.1 * scrollSm + (onMark ? 0.9 * localGlow : 0));
+
+      const r = MIST.r + (ICE.r - MIST.r) * mix;
+      const gg = MIST.g + (ICE.g - MIST.g) * mix;
+      const b = MIST.b + (ICE.b - MIST.b) * mix;
+      g.shadowColor = `rgba(2,6,23,${0.9 * alpha})`;
+      g.shadowBlur = 18 * alpha;
+      g.shadowOffsetX = 0;
+      g.shadowOffsetY = 0;
+      g.fillStyle = `rgba(${r | 0},${gg | 0},${b | 0},${0.99 * alpha})`;
+      g.fillText(part, x, cy);
+      g.shadowBlur = 0;
+      x += partW;
+    }
   }
 
   init(ctx: FrameContext): void {
@@ -103,15 +182,17 @@ export class FlowerCalloutTextComponent implements IComponent {
     canvas.width = CANVAS_W;
     canvas.height = CANVAS_H;
     const c2d = canvas.getContext('2d');
-    if (!c2d) return;
+    if (!c2d) {
+      return;
+    }
+    this.canvas2d = c2d;
 
-    FlowerCalloutTextComponent.drawToCanvas(c2d, CANVAS_W, CANVAS_H, 1);
+    this.drawToCanvas(c2d, CANVAS_W, CANVAS_H, 1, null, 0, 0, 0);
     const tex = new CanvasTexture(canvas);
     tex.colorSpace = SRGBColorSpace;
     tex.minFilter = LinearFilter;
     tex.magFilter = LinearFilter;
     tex.generateMipmaps = false;
-    tex.needsUpdate = true;
     this.map = tex;
 
     const mat = new SpriteMaterial({
@@ -122,6 +203,7 @@ export class FlowerCalloutTextComponent implements IComponent {
       opacity: 0,
       sizeAttenuation: true,
     });
+    mat.color = new Color(0xffffff);
     this.material = mat;
 
     const sp = new Sprite(mat);
@@ -142,12 +224,14 @@ export class FlowerCalloutTextComponent implements IComponent {
   }
 
   update(ctx: FrameContext): void {
-    if (!this.sprite || !this.material || !this.map) return;
+    if (!this.sprite || !this.material || !this.map || !this.canvas2d) {
+      return;
+    }
 
     const on = this.isFlowerExperience();
     this.group.visible = on;
     this.material.opacity = 0;
-    this.material.color.copy(this.colorIdle);
+    this.material.color.setRGB(1, 1, 1);
     if (!on || !this.journey) {
       this.hoverSm = damp(this.hoverSm, 0, 10, ctx.delta);
       this.scrollSm = damp(this.scrollSm, 0, 5, ctx.delta);
@@ -180,11 +264,17 @@ export class FlowerCalloutTextComponent implements IComponent {
     const aspect = CANVAS_H / CANVAS_W;
 
     let over = 0;
+    let uv: Vector2 | null = null;
     if (int) {
-      /* Damped NDC lags the cursor; use raw pointer so the ray matches the actual pointer. */
       this.ray.setFromCamera(int.rawPointer, ctx.camera);
       const hits = this.ray.intersectObject(this.sprite, false);
-      over = hits.length > 0 ? 1 : 0;
+      if (hits.length > 0) {
+        const h = hits[0] as { uv?: Vector2 | undefined };
+        over = 1;
+        if (h.uv) {
+          uv = h.uv;
+        }
+      }
     }
 
     const scrollTarget = this.reducedMotion
@@ -195,14 +285,36 @@ export class FlowerCalloutTextComponent implements IComponent {
     const hoverTarget = this.reducedMotion ? 0 : over;
     this.hoverSm = damp(this.hoverSm, hoverTarget, 16, ctx.delta);
 
-    this.material.color.copy(this.colorIdle);
-    this.material.color.lerp(this.colorScrollBoost, 0.07 * this.scrollSm * (1 - this.hoverSm * 0.5));
-    this.material.color.lerp(this.colorHover, 0.78 * this.hoverSm);
+    if (uv && this.hoverSm > 0.02) {
+      const tx = uv.x * CANVAS_W;
+      const ty = (1 - uv.y) * CANVAS_H;
+      this.ptrX = damp(this.ptrX, tx, 22, ctx.delta);
+      this.ptrY = damp(this.ptrY, ty, 22, ctx.delta);
+    } else {
+      this.ptrX = damp(this.ptrX, 0.5 * CANVAS_W, 5, ctx.delta);
+      this.ptrY = damp(this.ptrY, 0.5 * CANVAS_H, 5, ctx.delta);
+    }
+
+    let pointerCanvas: { x: number; y: number } | null = null;
+    if (over > 0.5 && uv) {
+      pointerCanvas = { x: this.ptrX, y: this.ptrY };
+    }
+
+    this.drawToCanvas(
+      this.canvas2d,
+      CANVAS_W,
+      CANVAS_H,
+      1,
+      pointerCanvas,
+      this.hoverSm,
+      ctx.elapsed,
+      this.scrollSm,
+    );
+    this.map.needsUpdate = true;
 
     const scrollK = 0.96 + 0.04 * enter + 0.06 * this.scrollSm;
-    const hoverK = 1 + (this.reducedMotion ? 0.04 : 0.11) * this.hoverSm;
-    const w = BASE_WIDTH * scrollK * hoverK;
-    this.sprite!.scale.set(w, w * aspect, 1);
+    const w = BASE_WIDTH * scrollK;
+    this.sprite.scale.set(w, w * aspect, 1);
 
     this.group.position.set(CAM_LOCAL.x, CAM_LOCAL.y, CAM_LOCAL.z);
     this.group.updateMatrixWorld(true);

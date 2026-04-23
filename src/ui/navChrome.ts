@@ -1,7 +1,13 @@
+import { contactFormDryRun } from '@/config/contactForm.config';
 import type { AudioSystem } from '@/systems/audioSystem';
 import type { ScrollSystem } from '@/systems/scrollSystem';
 import { initDrawerSlotTitles } from '@/ui/drawerSlotTitles';
 import { navScrollToJourneyIndex, navScrollToWork } from '@/ui/portfolioNavigator';
+import {
+  contactFieldId,
+  type ContactFormField,
+  validateContactFields,
+} from '@/utils/contactFormValidation';
 
 let lastMiniPlayerSig = '';
 
@@ -78,6 +84,9 @@ let adViz2 = 0.42;
 
 let drawerFocusReturn: HTMLElement | null = null;
 
+/** Set by `initSiteDrawer` so the contact sheet can close the menu. */
+let closeSiteMenu: (() => void) | null = null;
+
 let audioDockLiquidOpen = false;
 let audioHoldTimer: number | null = null;
 let audioAutoCloseTimer: number | null = null;
@@ -109,7 +118,9 @@ function initSiteDrawer(): void {
     if (isOpen()) return;
     if (!document.body.classList.contains('site-drawer-open')) return;
     document.body.classList.remove('site-drawer-open', 'site-drawer-toggle-on');
-    document.body.style.overflow = '';
+    if (!document.body.classList.contains('contact-sheet-open')) {
+      document.body.style.overflow = '';
+    }
     if (drawerFocusReturn) {
       drawerFocusReturn.focus();
       drawerFocusReturn = null;
@@ -192,9 +203,6 @@ function initSiteDrawer(): void {
   linkIndex?.addEventListener('click', (e) => onLinkNav(e, () => navScrollToJourneyIndex()));
   linkWork?.addEventListener('click', (e) => onLinkNav(e, () => navScrollToWork()));
 
-  document.getElementById('drawer-link-contact')?.addEventListener('click', () => {
-    closeIfOpen();
-  });
   document.getElementById('drawer-mailto')?.addEventListener('click', () => {
     closeIfOpen();
   });
@@ -213,6 +221,296 @@ function initSiteDrawer(): void {
 
   root.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab' || (!isOpen() && !isDrawerStackedOverScene())) return;
+    const list = getFocusable();
+    if (list.length === 0) return;
+    const active = document.activeElement as HTMLElement | null;
+    const i = active ? list.indexOf(active) : -1;
+    if (e.shiftKey) {
+      if (i <= 0) {
+        e.preventDefault();
+        list[list.length - 1]!.focus();
+      }
+    } else if (i === -1 || i === list.length - 1) {
+      e.preventDefault();
+      list[0]!.focus();
+    }
+  });
+
+  closeSiteMenu = closeIfOpen;
+}
+
+let contactFocusReturn: HTMLElement | null = null;
+let contactSuccessCloseTimer: number | null = null;
+
+/**
+ * Free-form email: Web3Forms (https://web3forms.com). Set VITE_WEB3FORMS_ACCESS_KEY or
+ * data-access-key on #contact-form in index.html.
+ */
+function initContactSheet(): void {
+  const root = document.getElementById('contact-sheet');
+  const backdrop = document.getElementById('contact-sheet-backdrop');
+  const panel = document.getElementById('contact-sheet-panel') as HTMLDivElement | null;
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  const errEl = document.getElementById('contact-form-error');
+  const successEl = document.getElementById('contact-success');
+  const closeBtn = document.getElementById('contact-sheet-close');
+  const navContact = document.getElementById('nav-link-contact');
+  const drawerContact = document.getElementById('drawer-link-contact');
+  if (!root || !panel || !form) return;
+
+  const isOpen = () => root.classList.contains('contact-sheet--open');
+
+  const getFocusable = (): HTMLElement[] => {
+    const raw = Array.from(
+      panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    return raw.filter((el) => {
+      if (el.hasAttribute('disabled') || el.getAttribute('aria-hidden') === 'true') {
+        return false;
+      }
+      const st = getComputedStyle(el);
+      if (st.display === 'none' || st.visibility === 'hidden') return false;
+      if (el.classList.contains('contact-sheet__hp')) return false;
+      return true;
+    });
+  };
+
+  const clearSuccessTimer = (): void => {
+    if (contactSuccessCloseTimer != null) {
+      window.clearTimeout(contactSuccessCloseTimer);
+      contactSuccessCloseTimer = null;
+    }
+  };
+
+  const clearFieldInvalid = (): void => {
+    for (const id of Object.values(contactFieldId)) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      el.classList.remove('contact-sheet__input--invalid', 'contact-sheet__textarea--invalid');
+      el.removeAttribute('aria-invalid');
+      el.removeAttribute('aria-describedby');
+    }
+  };
+
+  const setFieldInvalid = (field: ContactFormField): void => {
+    const id = contactFieldId[field];
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isTa = el.tagName === 'TEXTAREA';
+    el.classList.add(isTa ? 'contact-sheet__textarea--invalid' : 'contact-sheet__input--invalid');
+    el.setAttribute('aria-invalid', 'true');
+    if (errEl) {
+      el.setAttribute('aria-describedby', 'contact-form-error');
+    }
+  };
+
+  const resetToForm = (): void => {
+    clearFieldInvalid();
+    root.classList.remove('contact-sheet--success', 'contact-sheet--sending', 'contact-sheet--error');
+    form.reset();
+    form.removeAttribute('aria-hidden');
+    form.setAttribute('aria-busy', 'false');
+    successEl?.setAttribute('aria-hidden', 'true');
+    if (errEl) {
+      errEl.textContent = '';
+      errEl.setAttribute('hidden', '');
+    }
+  };
+
+  const showError = (message: string): void => {
+    if (!errEl) return;
+    errEl.textContent = message;
+    errEl.removeAttribute('hidden');
+    root.classList.add('contact-sheet--error');
+  };
+
+  const resolveWeb3AccessKey = (): string | null => {
+    const fromEnv = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY?.trim();
+    if (fromEnv) {
+      return fromEnv;
+    }
+    const raw = form.dataset.accessKey?.trim() ?? '';
+    if (raw && !raw.includes('REPLACE')) {
+      return raw;
+    }
+    return null;
+  };
+
+  const openContact = (): void => {
+    if (isOpen()) return;
+    clearSuccessTimer();
+    closeSiteMenu?.();
+    contactFocusReturn = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    resetToForm();
+    root.classList.add('contact-sheet--open');
+    root.setAttribute('aria-hidden', 'false');
+    navContact?.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('contact-sheet-open');
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => {
+      const first = getFocusable()[0];
+      (first ?? panel).focus();
+    });
+  };
+
+  const closeContact = (): void => {
+    if (!isOpen()) return;
+    clearSuccessTimer();
+    root.classList.remove('contact-sheet--open');
+    root.setAttribute('aria-hidden', 'true');
+    navContact?.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('contact-sheet-open');
+    if (!document.body.classList.contains('site-drawer-open')) {
+      document.body.style.removeProperty('overflow');
+    }
+    resetToForm();
+    if (contactFocusReturn) {
+      contactFocusReturn.focus();
+      contactFocusReturn = null;
+    } else {
+      navContact?.focus();
+    }
+  };
+
+  navContact?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openContact();
+  });
+
+  drawerContact?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeSiteMenu?.();
+    openContact();
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    closeContact();
+  });
+  backdrop?.addEventListener('click', () => {
+    closeContact();
+  });
+
+  form.addEventListener('input', (e) => {
+    const t = e.target as HTMLElement | null;
+    if (!t?.id?.startsWith('contact-')) {
+      return;
+    }
+    t.classList.remove('contact-sheet__input--invalid', 'contact-sheet__textarea--invalid');
+    t.removeAttribute('aria-invalid');
+    t.removeAttribute('aria-describedby');
+  });
+
+  const showContactSuccess = (): void => {
+    root.classList.remove('contact-sheet--error');
+    clearFieldInvalid();
+    root.classList.add('contact-sheet--success');
+    form.setAttribute('aria-hidden', 'true');
+    successEl?.setAttribute('aria-hidden', 'false');
+    successEl?.focus({ preventScroll: true });
+    clearSuccessTimer();
+    contactSuccessCloseTimer = window.setTimeout(() => {
+      closeContact();
+    }, 2600);
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearFieldInvalid();
+    if (errEl) {
+      errEl.textContent = '';
+      errEl.setAttribute('hidden', '');
+    }
+    root.classList.remove('contact-sheet--error');
+
+    const fd = new FormData(form);
+    const name = String(fd.get('name') ?? '').trim();
+    const email = String(fd.get('email') ?? '').trim();
+    const message = String(fd.get('message') ?? '').trim();
+    const botcheck = String(fd.get('botcheck') ?? '');
+
+    const v = validateContactFields(name, email, message);
+    if (v) {
+      showError(v.message);
+      setFieldInvalid(v.field);
+      const focusId = contactFieldId[v.field];
+      document.getElementById(focusId)?.focus({ preventScroll: true });
+      return;
+    }
+
+    if (botcheck.length > 0) {
+      return;
+    }
+
+    if (!contactFormDryRun) {
+      const accessKey = resolveWeb3AccessKey();
+      if (!accessKey) {
+        showError(
+          'Form not configured. Add your Web3Forms access key: .env (VITE_WEB3FORMS_ACCESS_KEY) or data-access-key in index.html.',
+        );
+        return;
+      }
+    }
+
+    root.classList.add('contact-sheet--sending');
+    form.setAttribute('aria-busy', 'true');
+    const submitBtn = document.getElementById('contact-form-submit') as HTMLButtonElement | null;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+    }
+
+    try {
+      if (contactFormDryRun) {
+        await new Promise((r) => {
+          window.setTimeout(r, 220);
+        });
+        showContactSuccess();
+        return;
+      }
+
+      const accessKey = resolveWeb3AccessKey()!;
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: accessKey,
+          name,
+          email,
+          message,
+          subject: 'Inkblot Studio — contact form',
+          ...(botcheck ? { botcheck } : {}),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string; error?: string };
+      if (res.ok && data.success === true) {
+        showContactSuccess();
+      } else {
+        const msg =
+          (typeof data.message === 'string' && data.message) ||
+          (typeof data.error === 'string' && data.error) ||
+          (res.status === 400 ? 'Please check the fields and try again.' : 'Could not send. Try again or email us.');
+        showError(msg);
+      }
+    } catch {
+      showError('Network error. Check your connection or email us directly.');
+    } finally {
+      root.classList.remove('contact-sheet--sending');
+      form.setAttribute('aria-busy', 'false');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+      }
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !isOpen()) return;
+    e.preventDefault();
+    closeContact();
+  });
+
+  root.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab' || !isOpen()) return;
     const list = getFocusable();
     if (list.length === 0) return;
     const active = document.activeElement as HTMLElement | null;
@@ -367,6 +665,7 @@ export function initNavChrome(audio: AudioSystem): void {
 
   initAudioDockControls(audio);
   initSiteDrawer();
+  initContactSheet();
   initDrawerSlotTitles();
 
   window.addEventListener('resize', () => {
