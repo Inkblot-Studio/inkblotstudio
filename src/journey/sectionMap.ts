@@ -1,13 +1,12 @@
 import { clamp, smoothstep } from '@/utils/math';
 
-export const JOURNEY_SECTION_COUNT = 6;
+export const JOURNEY_SECTION_COUNT = 2;
 
-/** Default desktop weights (sum arbitrary; normalized in resolve). */
-/** Longer acts: flower, hero, portfolio, gallery, lab, closing flower. */
-const JOURNEY_WEIGHTS_DEFAULT = [0.18, 0.16, 0.24, 0.18, 0.12, 0.12] as const;
+/** Flower intro → work / portfolio (DOM + Framer only, no extra 3D layer). */
+const JOURNEY_WEIGHTS_DEFAULT = [0.5, 0.5] as const;
 
 export interface JourneyState {
-  /** 0..5 */
+  /** 0..1 */
   readonly section: number;
   /** Progress within current section [0, 1] */
   readonly localT: number;
@@ -31,30 +30,25 @@ function buildCumulative(weights: readonly number[]): number[] {
   return cumulative;
 }
 
-/** Cumulative global stops: `[0, endS0, endS1, …, 1]` — length `JOURNEY_SECTION_COUNT + 1`. */
 export function journeyCumulativeStops(
   weights: readonly number[] = getJourneySectionWeights(),
 ): number[] {
   return buildCumulative(weights);
 }
 
-/** Tunable weights: mobile and reduced-motion get alternate pacing. */
 export function getJourneySectionWeights(): readonly number[] {
   if (typeof window === 'undefined') {
     return JOURNEY_WEIGHTS_DEFAULT;
   }
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    return [1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6];
+    return [0.5, 0.5];
   }
   if (window.matchMedia('(max-width: 768px)').matches) {
-    return [0.16, 0.14, 0.22, 0.17, 0.15, 0.16];
+    return [0.48, 0.52];
   }
   return JOURNEY_WEIGHTS_DEFAULT;
 }
 
-/**
- * Map global scroll progress [0,1] to section index and local progress.
- */
 export function resolveJourney(
   globalT: number,
   weights: readonly number[] = getJourneySectionWeights(),
@@ -81,31 +75,8 @@ export function resolveJourney(
   };
 }
 
-/**
- * Drives {@link CitronBloomComposer.setSceneTransition}: mix primary scene (flower + journey) with
- * the secondary “bloom transition” scene across the six journey acts.
- */
-export function computeJourneyDualSceneBlend(j: JourneyState): number {
-  const { section, localT } = j;
-  /** Opening flower: never composite the secondary scene (avoids transition props bleeding in). */
-  if (section === 0) return 0;
-  /** Logo act: primary scene only — no secondary “transition” composite behind the hero. */
-  if (section === 1) return 0;
-  if (section === 2) {
-    const ramp = smoothstep(0, 0.3, localT);
-    return ramp * (0.71 - smoothstep(0, 1, localT) * 0.11);
-  }
-  if (section === 3) return 0.57 + smoothstep(0, 1, localT) * 0.27;
-  if (section === 4) return 0.845;
-  return 0.845 * (1 - smoothstep(0.08, 0.91, localT));
-}
-
 const SECTION_TRANSITION_EDGE = 0.24;
 
-/**
- * 0 = stable act (no dual-scene warp / parallax swim / heavy film); 1 = at section in/out.
- * Used so journey reads calm mid-scroll and only “moves” when crossing acts.
- */
 export function computeJourneySectionTransitionFx(j: JourneyState): number {
   if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     return 0;

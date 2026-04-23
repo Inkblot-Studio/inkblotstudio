@@ -15,11 +15,6 @@ declare module '*.frag' {
   export default src;
 }
 
-declare module '*.woff?url' {
-  const src: string;
-  export default src;
-}
-
 declare module 'troika-three-text' {
   import { Object3D, Material, Color } from 'three';
   export class Text extends Object3D {

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Inkblot Studio — immersive WebGL journey, glass flora, and production engineering. Scroll-driven 3D; optional chat navigation."
+      content="Inkblot Studio — scroll-driven 3D, glass flora, and production engineering for serious products."
     />
-    <title>Inkblot Studio | Cinematic Visual Experience</title>
+    <title>Inkblot Studio | Cinematic visual experience</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +17,7 @@
         --scroll-raw: 0;
         --journey-section: 0;
         --journey-local: 0;
-        --journey-hero-ui: 0;
+        --journey-work-ui: 0;
         --journey-edge: 0;
         --journey-rail: #7dd3fc;
         --at-neon-flicker: 1;
@@ -34,76 +34,12 @@
         --border: #1E293B;
       }
 
-      /* Splash Screen Styles */
-      #splash-screen {
+      /* React splash mounts into #splash-root (see src/ui/loading/LoadingScreen.tsx) */
+      #splash-root {
         position: fixed;
         inset: 0;
         z-index: 9999;
-        background-color: color-mix(in srgb, var(--background) 95%, transparent);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-      }
-
-      #splash-screen.is-loaded {
-        opacity: 0;
-        transform: scale(1.05);
-        pointer-events: none;
-      }
-
-      .splash-bloom {
-        position: relative;
-        width: clamp(80px, 15vw, 120px);
-        height: clamp(80px, 15vw, 120px);
-        transform-style: preserve-3d;
-        animation: splash-spin 8s linear infinite;
-        margin-bottom: 3rem;
-      }
-
-      @keyframes splash-spin {
-        from { transform: perspective(800px) rotateX(60deg) rotateZ(0deg); }
-        to { transform: perspective(800px) rotateX(60deg) rotateZ(360deg); }
-      }
-
-      .splash-petal {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: clamp(20px, 4vw, 30px);
-        height: clamp(70px, 12vw, 100px);
-        margin-left: calc(clamp(20px, 4vw, 30px) / -2);
-        transform-origin: bottom center;
-        background: linear-gradient(to top, rgba(34, 211, 238, 0.1), rgba(167, 139, 250, 0.8));
-        border-radius: 15px 15px 50% 50%;
-        border: 1px solid rgba(34, 211, 238, 0.4);
-        box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
-        backdrop-filter: blur(4px);
-        transform: rotateZ(calc(var(--i) * 45deg)) translateY(calc(clamp(70px, 12vw, 100px) * -0.3)) rotateX(var(--petal-tilt));
-        animation: petal-breathe 4s ease-in-out infinite alternate;
-      }
-
-      @keyframes petal-breathe {
-        0% { --petal-tilt: 20deg; transform: rotateZ(calc(var(--i) * 45deg)) translateY(calc(clamp(70px, 12vw, 100px) * -0.3)) rotateX(20deg) scale(0.9); }
-        100% { --petal-tilt: 70deg; transform: rotateZ(calc(var(--i) * 45deg)) translateY(calc(clamp(70px, 12vw, 100px) * -0.3)) rotateX(70deg) scale(1.1); }
-      }
-
-      .splash-text {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: clamp(0.6rem, 1vw, 0.75rem);
-        letter-spacing: 0.3em;
-        color: rgba(34, 211, 238, 0.8);
-        text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
-        text-transform: uppercase;
-        animation: text-pulse 2s ease-in-out infinite alternate;
-      }
-
-      @keyframes text-pulse {
-        from { opacity: 0.5; }
-        to { opacity: 1; }
+        pointer-events: auto;
       }
 
       *, *::before, *::after {
@@ -686,13 +622,13 @@
       #virtual-scroll-space {
         display: block;
         width: 1px;
-        height: 1550vh;
+        height: 520vh;
         pointer-events: none;
       }
 
       @media (max-width: 768px) {
         #virtual-scroll-space {
-          height: 1750vh;
+          height: 600vh;
         }
       }
 
@@ -700,19 +636,7 @@
         --journey-rail: #7dd3fc;
       }
       body.journey-flower-active[data-journey-section='1'] {
-        --journey-rail: #c4b5fd;
-      }
-      body.journey-flower-active[data-journey-section='2'] {
-        --journey-rail: #a78bfa;
-      }
-      body.journey-flower-active[data-journey-section='3'] {
-        --journey-rail: #22d3ee;
-      }
-      body.journey-flower-active[data-journey-section='4'] {
-        --journey-rail: #38bdf8;
-      }
-      body.journey-flower-active[data-journey-section='5'] {
-        --journey-rail: #6ee7b7;
+        --journey-rail: #a5b4fc;
       }
 
       body.journey-boundary-flash::after {
@@ -814,251 +738,101 @@
         pointer-events: none;
       }
 
-      #journey-hero.journey-panel {
-        opacity: var(--journey-hero-ui, 0);
+      #journey-work.journey-panel {
+        align-items: center;
+        justify-content: center;
+        padding: clamp(3rem, 8vh, 4rem) clamp(1.1rem, 4vw, 2rem);
+        opacity: var(--journey-work-ui, 0);
+        pointer-events: none;
       }
 
-      body[data-journey-section='2'] #journey-portfolio.journey-panel {
-        opacity: 1;
+      body[data-journey-section='1'] #journey-work.journey-panel {
         pointer-events: auto;
       }
 
-      body[data-journey-section='3'] #journey-water-cap.journey-panel {
-        opacity: 1;
+      .journey-work__inner {
+        width: min(32rem, 100%);
+        margin: 0 auto;
       }
 
-      body[data-journey-section='4'] #journey-lab-cap.journey-panel {
-        opacity: 1;
+      .journey-work__kicker {
+        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: color-mix(in srgb, #94a3b8 90%, #a5b4fc);
+        margin: 0 0 0.5rem;
+      }
+
+      .journey-work__head {
+        margin-bottom: 1.5rem;
+      }
+
+      .journey-work__title {
+        font-family: 'Outfit', system-ui, sans-serif;
+        font-weight: 600;
+        font-size: clamp(1.2rem, 2.6vw, 1.5rem);
+        line-height: 1.2;
+        letter-spacing: 0.02em;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem;
+      }
+
+      .journey-work__lede {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(0.84rem, 1.2vw, 0.95rem);
+        line-height: 1.5;
+        color: color-mix(in srgb, var(--text-muted) 95%, #f1f5f9);
+        margin: 0 0 0.4rem;
+      }
+
+      .journey-work__tagline {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        color: color-mix(in srgb, #7dd3fc 55%, var(--text-muted));
+        margin: 0;
+      }
+
+      .journey-work__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        border-top: 1px solid color-mix(in srgb, #334155 70%, transparent);
+      }
+
+      .journey-work__row {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        gap: 0.5rem 1rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid color-mix(in srgb, #1e293b 90%, transparent);
+        align-items: baseline;
+        font-size: 0.8rem;
+      }
+
+      @media (max-width: 520px) {
+        .journey-work__row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .journey-work__name {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .journey-work__context {
+        font-family: 'Outfit', sans-serif;
+        color: var(--text-muted);
+        line-height: 1.4;
       }
 
       @media (prefers-reduced-motion: reduce) {
         #journey-dom .journey-panel {
           transition: opacity 0.2s ease;
         }
-      }
-
-      .journey-hero__grid {
-        width: min(72rem, 100%);
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem 2rem;
-        align-items: end;
-      }
-
-      @media (min-width: 900px) {
-        .journey-hero__grid {
-          grid-template-columns: 1.1fr 0.9fr;
-          align-items: end;
-        }
-      }
-
-      .journey-hero__head {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-        z-index: 0;
-      }
-
-      .journey-hero__founded {
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: clamp(0.62rem, 1.1vw, 0.72rem);
-        letter-spacing: 0.28em;
-        text-transform: uppercase;
-        color: color-mix(in srgb, #c4b5fd 72%, var(--text-muted));
-      }
-
-      .journey-hero__studio {
-        font-family: 'Outfit', system-ui, sans-serif;
-        font-weight: 500;
-        font-size: clamp(0.85rem, 1.4vw, 1rem);
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        color: color-mix(in srgb, var(--text-primary) 92%, #e9d5ff);
-      }
-
-      .journey-hero__title {
-        font-family: 'Outfit', system-ui, sans-serif;
-        font-weight: 600;
-        font-size: clamp(1.75rem, 5.2vw, 3.15rem);
-        line-height: 1.08;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        max-width: 18ch;
-        color: var(--text-primary);
-        text-shadow: 0 0 42px color-mix(in srgb, #312e81 35%, transparent);
-        display: flex;
-        flex-direction: column;
-        gap: 0.12em;
-      }
-
-      .journey-hero__title-line {
-        display: block;
-      }
-
-      .journey-hero__tagline {
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: clamp(0.72rem, 1.25vw, 0.88rem);
-        letter-spacing: 0.06em;
-        color: color-mix(in srgb, #a5b4fc 88%, var(--text-muted));
-        max-width: 36ch;
-        margin-top: 0.25rem;
-      }
-
-      .journey-hero__body {
-        display: flex;
-        flex-direction: column;
-        gap: 0.65em;
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: clamp(0.68rem, 1.15vw, 0.8rem);
-        line-height: 1.65;
-        letter-spacing: 0.04em;
-        color: color-mix(in srgb, var(--text-muted) 94%, #e2e8f0);
-        max-width: 38ch;
-        justify-self: end;
-        border-left: 1px solid color-mix(in srgb, #a78bfa 35%, transparent);
-        padding-left: clamp(0.85rem, 2vw, 1.2rem);
-      }
-
-      .journey-hero__body p {
-        margin: 0;
-      }
-
-      @media (max-width: 899px) {
-        .journey-hero__body {
-          justify-self: start;
-          border-left: none;
-          border-top: 1px solid color-mix(in srgb, #a78bfa 28%, transparent);
-          padding-left: 0;
-          padding-top: 0.85rem;
-          max-width: 100%;
-        }
-      }
-
-      #portfolio-shell {
-        width: min(42rem, 100%);
-        margin-left: 0;
-        margin-right: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
-      }
-
-      .journey-terminal__label {
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: clamp(0.58rem, 1vw, 0.68rem);
-        letter-spacing: 0.32em;
-        text-transform: uppercase;
-        color: color-mix(in srgb, #e9d5ff 75%, var(--text-muted));
-        margin-bottom: 0.35rem;
-      }
-
-      .journey-terminal__list {
-        list-style: none;
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: clamp(0.68rem, 1.2vw, 0.8rem);
-        letter-spacing: 0.08em;
-        color: color-mix(in srgb, var(--text-primary) 90%, #c4b5fd);
-      }
-
-      .journey-terminal__list li {
-        margin: 0.35rem 0;
-        padding-left: 0.15rem;
-      }
-
-      .journey-terminal__list li::before {
-        content: '-> ';
-        color: color-mix(in srgb, #a78bfa 80%, var(--text-muted));
-      }
-
-      .journey-chat {
-        margin-top: 0.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.45rem;
-        max-width: 28rem;
-      }
-
-      .journey-chat label {
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: 0.58rem;
-        letter-spacing: 0.24em;
-        text-transform: uppercase;
-        color: color-mix(in srgb, var(--text-muted) 92%, #e9d5ff);
-      }
-
-      .journey-chat__row {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-      }
-
-      .journey-chat input[type='text'] {
-        flex: 1;
-        min-width: 0;
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: 0.72rem;
-        letter-spacing: 0.06em;
-        padding: 0.55rem 0.85rem;
-        border-radius: 999px;
-        border: 1px solid color-mix(in srgb, #a78bfa 42%, #334155);
-        background: color-mix(in srgb, #020617 82%, transparent);
-        color: var(--text-primary);
-        outline: none;
-      }
-
-      .journey-chat input::placeholder {
-        color: color-mix(in srgb, var(--text-muted) 75%, #94a3b8);
-      }
-
-      .journey-chat button[type='submit'] {
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: 0.58rem;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        padding: 0.55rem 0.95rem;
-        border-radius: 999px;
-        border: 1px solid color-mix(in srgb, #c4b5fd 45%, #475569);
-        background: color-mix(in srgb, #1e1b4b 55%, #020617);
-        color: var(--text-primary);
-        cursor: pointer;
-      }
-
-      .journey-chat button[type='submit']:focus-visible,
-      .journey-chat input:focus-visible {
-        outline: 1px solid color-mix(in srgb, #c4b5fd 65%, transparent);
-        outline-offset: 2px;
-      }
-
-      .journey-chat__reply {
-        font-family: 'Syne', 'Outfit', system-ui, sans-serif;
-        font-size: 0.72rem;
-        font-weight: 500;
-        letter-spacing: 0.04em;
-        line-height: 1.45;
-        color: color-mix(in srgb, #a5f3fc 78%, var(--text-muted));
-        min-height: 1.35em;
-        text-shadow:
-          0 0 calc(12px * var(--at-neon-pulse, 0.45))
-            color-mix(in srgb, #67e8f9 40%, transparent);
-      }
-
-      .journey-caption {
-        font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-        font-size: clamp(0.62rem, 1.05vw, 0.74rem);
-        letter-spacing: 0.26em;
-        text-transform: uppercase;
-        color: color-mix(in srgb, #7dd3fc 72%, var(--text-muted));
-        text-align: center;
-        max-width: 40rem;
-        line-height: 1.55;
-      }
-
-      .journey-caption strong {
-        display: block;
-        font-weight: 500;
-        letter-spacing: 0.34em;
-        margin-bottom: 0.45rem;
-        color: color-mix(in srgb, #e0e7ff 88%, #7dd3fc);
       }
 
       @media (max-width: 768px) {
@@ -1125,359 +899,6 @@
         }
         body.music-playing .nav-player-wrap {
           transition-duration: 0.01ms !important;
-        }
-      }
-
-      /* Scroll-driven copy over Citron Bloom (no 3D text in the flower scene). */
-      body:not(.citron-bloom-mode) #bloom-story {
-        display: none;
-      }
-
-      body.experience-stomp #bloom-story {
-        display: none;
-      }
-
-      body.journey-flower-active #bloom-story {
-        display: none;
-      }
-
-      #bloom-story {
-        position: fixed;
-        inset: 0;
-        z-index: 3;
-        pointer-events: none;
-        --bs: var(--bloom-scroll, 0);
-      }
-
-      /* Full-viewport scenes — copy runs edge-to-edge with inset padding; washes bleed full width. */
-      .bloom-panel {
-        position: fixed;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: clamp(1.25rem, 5vw, 3.5rem);
-        box-sizing: border-box;
-        pointer-events: none;
-      }
-
-      .bloom-panel::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-        opacity: 0.92;
-        background: linear-gradient(
-          105deg,
-          color-mix(in srgb, var(--scene-tint, #0f172a) 72%, transparent) 0%,
-          color-mix(in srgb, var(--background) 88%, transparent) 45%,
-          color-mix(in srgb, var(--scene-tint, #0f172a) 55%, transparent) 100%
-        );
-      }
-
-      .bloom-panel::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        z-index: 1;
-        pointer-events: none;
-        background:
-          linear-gradient(
-            90deg,
-            transparent,
-            color-mix(in srgb, var(--scene-accent, #7dd3fc) 45%, transparent) 18%,
-            color-mix(in srgb, var(--scene-accent, #7dd3fc) 32%, transparent) 82%,
-            transparent
-          ) center top / 100% 1px no-repeat,
-          linear-gradient(
-            90deg,
-            transparent,
-            color-mix(in srgb, var(--scene-accent, #7dd3fc) 28%, transparent) 22%,
-            color-mix(in srgb, var(--scene-accent, #7dd3fc) 22%, transparent) 78%,
-            transparent
-          ) center bottom / 100% 1px no-repeat;
-        opacity: 0.55;
-      }
-
-      .bloom-panel:nth-child(1) {
-        --scene-tint: #0c1222;
-        --scene-accent: #7dd3fc;
-      }
-      .bloom-panel:nth-child(2) {
-        --scene-tint: #0a1620;
-        --scene-accent: #5eead4;
-      }
-      .bloom-panel:nth-child(3) {
-        --scene-tint: #0f1428;
-        --scene-accent: #93c5fd;
-      }
-      .bloom-panel:nth-child(4) {
-        --scene-tint: #0d1220;
-        --scene-accent: #a5b4fc;
-      }
-      .bloom-panel:nth-child(5) {
-        --scene-tint: #0a1822;
-        --scene-accent: #6ee7b7;
-      }
-      .bloom-panel:nth-child(6) {
-        --scene-tint: #101525;
-        --scene-accent: #67e8f9;
-      }
-      .bloom-panel:nth-child(7) {
-        --scene-tint: #0c1526;
-        --scene-accent: #7dd3fc;
-      }
-
-      .bloom-scene {
-        position: relative;
-        z-index: 2;
-        width: 100%;
-        max-width: min(72rem, 100%);
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: clamp(0.75rem, 2.5vw, 1.35rem);
-      }
-
-      .bloom-panel:nth-child(even) .bloom-scene {
-        text-align: right;
-      }
-
-      .bloom-panel:nth-child(even) .bloom-scene__rail {
-        margin-left: auto;
-      }
-
-      .bloom-scene__rail {
-        width: min(100%, 42rem);
-        height: 3px;
-        border-radius: 999px;
-        background: linear-gradient(
-          90deg,
-          color-mix(in srgb, var(--scene-accent, #7dd3fc) 70%, transparent),
-          color-mix(in srgb, var(--scene-accent, #7dd3fc) 15%, transparent)
-        );
-        opacity: calc(0.82 * var(--at-neon-flicker, 1));
-      }
-
-      body.citron-bloom-mode .bloom-scene__rail {
-        box-shadow:
-          0 0 calc(14px * var(--at-neon-flicker, 1))
-            color-mix(
-              in srgb,
-              var(--scene-accent, #7dd3fc) calc(50% * var(--at-neon-pulse, 0.45)),
-              transparent
-            ),
-          0 0 calc(28px * var(--at-neon-pulse, 0.45))
-            color-mix(in srgb, var(--scene-accent, #7dd3fc) 22%, transparent);
-      }
-
-      .bloom-panel:nth-child(even) .bloom-scene__rail {
-        background: linear-gradient(
-          270deg,
-          color-mix(in srgb, var(--scene-accent, #7dd3fc) 70%, transparent),
-          color-mix(in srgb, var(--scene-accent, #7dd3fc) 15%, transparent)
-        );
-      }
-
-      .bloom-scene__meta {
-        font-family: 'Syne', 'Fraunces', Georgia, serif;
-        font-size: clamp(0.72rem, 1.35vw, 0.88rem);
-        font-weight: 500;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        color: color-mix(in srgb, var(--scene-accent, #7dd3fc) 75%, var(--text-muted));
-        display: flex;
-        align-items: baseline;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-        margin: 0;
-      }
-
-      .bloom-panel:nth-child(even) .bloom-scene__meta {
-        justify-content: flex-end;
-      }
-
-      .bloom-scene__index {
-        font-family: 'Fraunces', Georgia, serif;
-        font-size: clamp(2.75rem, 10vw, 5.5rem);
-        font-weight: 300;
-        line-height: 0.85;
-        letter-spacing: -0.02em;
-        color: transparent;
-        -webkit-text-stroke: 1px color-mix(in srgb, var(--scene-accent, #7dd3fc) 42%, transparent);
-        user-select: none;
-        margin-bottom: clamp(-0.25rem, -1vw, 0);
-        opacity: 0.9;
-      }
-
-      .bloom-panel h2 {
-        font-family: 'Outfit', system-ui, sans-serif;
-        font-weight: 600;
-        font-size: clamp(1.35rem, 3.8vw, 2.35rem);
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        line-height: 1.12;
-        margin: 0;
-        max-width: min(22ch, 100%);
-        background: linear-gradient(
-          120deg,
-          var(--text-primary) 0%,
-          color-mix(in srgb, var(--text-primary) 88%, var(--scene-accent, #7dd3fc)) 100%
-        );
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        color: transparent;
-      }
-
-      .bloom-panel:nth-child(even) h2 {
-        margin-left: auto;
-      }
-
-      .bloom-panel .bloom-scene__body {
-        font-family: 'Outfit', system-ui, sans-serif;
-        font-size: clamp(0.88rem, 1.85vw, 1.08rem);
-        line-height: 1.72;
-        color: color-mix(in srgb, var(--text-muted) 92%, var(--text-primary));
-        font-weight: 400;
-        max-width: min(38rem, 100%);
-        letter-spacing: 0.01em;
-        margin: 0;
-        border-left: 1px solid color-mix(in srgb, var(--scene-accent, #7dd3fc) 28%, transparent);
-        padding-left: clamp(0.85rem, 2.5vw, 1.25rem);
-      }
-
-      .bloom-panel:nth-child(even) .bloom-scene__body {
-        margin-left: auto;
-        border-left: none;
-        border-right: 1px solid color-mix(in srgb, var(--scene-accent, #7dd3fc) 28%, transparent);
-        padding-left: 0;
-        padding-right: clamp(0.85rem, 2.5vw, 1.25rem);
-      }
-
-      .bloom-panel--1 {
-        opacity: min(
-          clamp(0, calc((var(--bs) - 0.05) / 0.07), 1),
-          clamp(0, calc((0.28 - var(--bs)) / 0.08), 1)
-        );
-      }
-
-      .bloom-panel--1 .bloom-scene {
-        transform: translate3d(0, calc((1 - min(
-          clamp(0, calc((var(--bs) - 0.05) / 0.07), 1),
-          clamp(0, calc((0.28 - var(--bs)) / 0.08), 1)
-        )) * 22px), 0);
-      }
-
-      .bloom-panel--2 {
-        opacity: min(
-          clamp(0, calc((var(--bs) - 0.2) / 0.07), 1),
-          clamp(0, calc((0.4 - var(--bs)) / 0.08), 1)
-        );
-      }
-
-      .bloom-panel--2 .bloom-scene {
-        transform: translate3d(0, calc((1 - min(
-          clamp(0, calc((var(--bs) - 0.2) / 0.07), 1),
-          clamp(0, calc((0.4 - var(--bs)) / 0.08), 1)
-        )) * 22px), 0);
-      }
-
-      .bloom-panel--3 {
-        opacity: min(
-          clamp(0, calc((var(--bs) - 0.34) / 0.07), 1),
-          clamp(0, calc((0.54 - var(--bs)) / 0.08), 1)
-        );
-      }
-
-      .bloom-panel--3 .bloom-scene {
-        transform: translate3d(0, calc((1 - min(
-          clamp(0, calc((var(--bs) - 0.34) / 0.07), 1),
-          clamp(0, calc((0.54 - var(--bs)) / 0.08), 1)
-        )) * 22px), 0);
-      }
-
-      .bloom-panel--4 {
-        opacity: min(
-          clamp(0, calc((var(--bs) - 0.48) / 0.07), 1),
-          clamp(0, calc((0.68 - var(--bs)) / 0.08), 1)
-        );
-      }
-
-      .bloom-panel--4 .bloom-scene {
-        transform: translate3d(0, calc((1 - min(
-          clamp(0, calc((var(--bs) - 0.48) / 0.07), 1),
-          clamp(0, calc((0.68 - var(--bs)) / 0.08), 1)
-        )) * 22px), 0);
-      }
-
-      .bloom-panel--5 {
-        opacity: min(
-          clamp(0, calc((var(--bs) - 0.62) / 0.07), 1),
-          clamp(0, calc((0.82 - var(--bs)) / 0.08), 1)
-        );
-      }
-
-      .bloom-panel--5 .bloom-scene {
-        transform: translate3d(0, calc((1 - min(
-          clamp(0, calc((var(--bs) - 0.62) / 0.07), 1),
-          clamp(0, calc((0.82 - var(--bs)) / 0.08), 1)
-        )) * 22px), 0);
-      }
-
-      .bloom-panel--6 {
-        opacity: min(
-          clamp(0, calc((var(--bs) - 0.76) / 0.07), 1),
-          clamp(0, calc((0.96 - var(--bs)) / 0.08), 1)
-        );
-      }
-
-      .bloom-panel--6 .bloom-scene {
-        transform: translate3d(0, calc((1 - min(
-          clamp(0, calc((var(--bs) - 0.76) / 0.07), 1),
-          clamp(0, calc((0.96 - var(--bs)) / 0.08), 1)
-        )) * 22px), 0);
-      }
-
-      .bloom-panel--7 {
-        opacity: min(
-          clamp(0, calc((var(--bs) - 0.88) / 0.06), 1),
-          clamp(0, calc((1.04 - var(--bs)) / 0.1), 1)
-        );
-      }
-
-      .bloom-panel--7 .bloom-scene {
-        transform: translate3d(0, calc((1 - min(
-          clamp(0, calc((var(--bs) - 0.88) / 0.06), 1),
-          clamp(0, calc((1.04 - var(--bs)) / 0.1), 1)
-        )) * 22px), 0);
-      }
-
-      .bloom-panel--1 .bloom-scene,
-      .bloom-panel--2 .bloom-scene,
-      .bloom-panel--3 .bloom-scene,
-      .bloom-panel--4 .bloom-scene,
-      .bloom-panel--5 .bloom-scene,
-      .bloom-panel--6 .bloom-scene,
-      .bloom-panel--7 .bloom-scene {
-        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .bloom-panel--1 .bloom-scene,
-        .bloom-panel--2 .bloom-scene,
-        .bloom-panel--3 .bloom-scene,
-        .bloom-panel--4 .bloom-scene,
-        .bloom-panel--5 .bloom-scene,
-        .bloom-panel--6 .bloom-scene,
-        .bloom-panel--7 .bloom-scene {
-          transition: none;
         }
       }
 
@@ -1612,20 +1033,7 @@
     </style>
   </head>
   <body>
-    <!-- Splash Screen -->
-    <div id="splash-screen">
-      <div class="splash-bloom">
-        <div class="splash-petal" style="--i: 0;"></div>
-        <div class="splash-petal" style="--i: 1;"></div>
-        <div class="splash-petal" style="--i: 2;"></div>
-        <div class="splash-petal" style="--i: 3;"></div>
-        <div class="splash-petal" style="--i: 4;"></div>
-        <div class="splash-petal" style="--i: 5;"></div>
-        <div class="splash-petal" style="--i: 6;"></div>
-        <div class="splash-petal" style="--i: 7;"></div>
-      </div>
-      <div class="splash-text">INITIALIZING ENGINE...</div>
-    </div>
+    <div id="splash-root"></div>
 
     <!-- Virtual scroll element to provide native scrollbars while visual is fixed -->
     <div id="virtual-scroll-space"></div>
@@ -1640,133 +1048,10 @@
     </div>
     <div id="hud-container"></div>
     <div id="interaction-layer"></div>
-    
-    <div id="bloom-story">
-      <div class="bloom-panel bloom-panel--1">
-        <div class="bloom-scene">
-          <span class="bloom-scene__index" aria-hidden="true">01</span>
-          <p class="bloom-scene__meta">Inkblot Studio · Momentum</p>
-          <div class="bloom-scene__rail" aria-hidden="true"></div>
-          <h2>Engineering momentum</h2>
-          <p class="bloom-scene__body">Inkblot Studio partners with teams who need more than slides—we ship production systems, internal tools, and flagship experiences. From discovery to launch, we own architecture, implementation, and the operational story around it.</p>
-        </div>
-      </div>
-      <div class="bloom-panel bloom-panel--2">
-        <div class="bloom-scene">
-          <span class="bloom-scene__index" aria-hidden="true">02</span>
-          <p class="bloom-scene__meta">Research · Labs</p>
-          <div class="bloom-scene__rail" aria-hidden="true"></div>
-          <h2>R&amp;D labs</h2>
-          <p class="bloom-scene__body">Our lab explores applied AI, simulation, and robotics. Experiments that survive scrutiny graduate into product: safer autonomy, faster iteration loops, and tooling our clients can run without a research team on payroll.</p>
-        </div>
-      </div>
-      <div class="bloom-panel bloom-panel--3">
-        <div class="bloom-scene">
-          <span class="bloom-scene__index" aria-hidden="true">03</span>
-          <p class="bloom-scene__meta">Stack · Citron</p>
-          <div class="bloom-scene__rail" aria-hidden="true"></div>
-          <h2>Proprietary stack</h2>
-          <p class="bloom-scene__body">Citron is our backbone for data-heavy pipelines—autonomous ingestion, observability, and failure-aware orchestration. It is how we deliver resilient backends without reinventing reliability on every engagement.</p>
-        </div>
-      </div>
-      <div class="bloom-panel bloom-panel--4">
-        <div class="bloom-scene">
-          <span class="bloom-scene__index" aria-hidden="true">04</span>
-          <p class="bloom-scene__meta">Culture · Craft</p>
-          <div class="bloom-scene__rail" aria-hidden="true"></div>
-          <h2>People &amp; craft</h2>
-          <p class="bloom-scene__body">We are engineers, designers, and researchers who prefer small senior squads to bloated benches. You work with the people who write the code, review the models, and answer when something breaks at 3 a.m.</p>
-        </div>
-      </div>
-      <div class="bloom-panel bloom-panel--5">
-        <div class="bloom-scene">
-          <span class="bloom-scene__index" aria-hidden="true">05</span>
-          <p class="bloom-scene__meta">Process · Delivery</p>
-          <div class="bloom-scene__rail" aria-hidden="true"></div>
-          <h2>How we work</h2>
-          <p class="bloom-scene__body">Fixed-scope prototypes, embedded sprints, or long-running product teams—we match the contract to the risk. Clear milestones, visible repos, and weekly demos so stakeholders always know what is real versus roadmap fiction.</p>
-        </div>
-      </div>
-      <div class="bloom-panel bloom-panel--6">
-        <div class="bloom-scene">
-          <span class="bloom-scene__index" aria-hidden="true">06</span>
-          <p class="bloom-scene__meta">Focus · Industries</p>
-          <div class="bloom-scene__rail" aria-hidden="true"></div>
-          <h2>Where we fit</h2>
-          <p class="bloom-scene__body">Industrial automation, creative technology, fintech infrastructure, and research-driven startups. If your problem blends software, data, and physical or visual reality, we have probably built something adjacent already.</p>
-        </div>
-      </div>
-      <div class="bloom-panel bloom-panel--7">
-        <div class="bloom-scene">
-          <span class="bloom-scene__index" aria-hidden="true">07</span>
-          <p class="bloom-scene__meta">Next · Contact</p>
-          <div class="bloom-scene__rail" aria-hidden="true"></div>
-          <h2>Start a conversation</h2>
-          <p class="bloom-scene__body">Tell us about the system you need—not only the interface. We will reply with an honest take on scope, stack, and timeline. Remote-first with roots in Europe; English and German project teams available.</p>
-        </div>
-      </div>
-    </div>
 
     <div id="journey-dom" aria-hidden="true">
-      <section id="journey-hero" class="journey-panel journey-hero" aria-label="Hero">
-        <div class="journey-hero__grid">
-          <div class="journey-hero__head">
-            <span class="journey-hero__founded">Founded 2026</span>
-            <span class="journey-hero__studio">Inkblot Studio</span>
-            <h1 class="journey-hero__title">
-              <span class="journey-hero__title-line">Custom AI systems</span>
-              <span class="journey-hero__title-line">Built for your business</span>
-            </h1>
-            <p class="journey-hero__tagline">Secure. Scalable. Production-ready.</p>
-          </div>
-          <div class="journey-hero__body">
-            <p>We design and build custom AI systems for businesses.</p>
-            <p>From initial research to full deployment, everything runs on secure, private infrastructure.</p>
-            <p>Each system is built to solve a specific problem and scale with your operations.</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="journey-portfolio" class="journey-panel" aria-label="Portfolio">
-        <div id="portfolio-shell">
-          <div>
-            <p class="journey-terminal__label">What are you looking for?</p>
-            <ul class="journey-terminal__list">
-              <li>Websites &amp; product surfaces</li>
-              <li>Installations &amp; realtime worlds</li>
-              <li>XR / immersive labs</li>
-              <li>Tools &amp; internal suites</li>
-            </ul>
-          </div>
-          <form id="journey-chat-form" class="journey-chat" autocomplete="off">
-            <label for="journey-chat-q">Ask me anything</label>
-            <div class="journey-chat__row">
-              <input
-                id="journey-chat-q"
-                name="q"
-                type="text"
-                placeholder="ASK ME ANYTHING…"
-                maxlength="500"
-              />
-              <button type="submit">Send</button>
-            </div>
-            <p id="journey-chat-reply" class="journey-chat__reply" aria-live="polite"></p>
-          </form>
-        </div>
-      </section>
-
-      <section id="journey-water-cap" class="journey-panel" aria-label="Water act">
-        <p class="journey-caption">
-          <strong>Stunning visuals</strong>
-          Reflection, glass, and motion — engineered for emotion, tuned for performance.
-        </p>
-      </section>
-
-      <section id="journey-lab-cap" class="journey-panel" aria-label="Lab act">
-        <p class="journey-caption">
-          <strong>// The lab</strong>
-          Prototypes become pipelines: we take experiments from shader to shipping with the same rigor as production code.
-        </p>
+      <section id="journey-work" class="journey-panel journey-work" aria-label="Work and portfolio">
+        <div id="journey-work-root"></div>
       </section>
     </div>
 

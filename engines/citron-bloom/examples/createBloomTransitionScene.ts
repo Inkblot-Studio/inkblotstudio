@@ -9,10 +9,12 @@ import {
   Scene,
 } from 'three';
 import type { Camera } from 'three';
-import ibmPlexMonoFontUrl from '@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff?url';
 import { Text } from 'troika-three-text';
 import { createGlassMaterial } from '../bloom-core/glassMaterialFactory';
 import { createCinematicLighting } from '../bloom-core/sceneLighting';
+
+/** Latin 400 from `public/fonts/` — avoids Vite resolving deep paths inside `@fontsource/*`. */
+const ibmPlexMonoFontUrl = `${import.meta.env.BASE_URL}fonts/ibm-plex-mono-latin-400-normal.woff2`;
 
 export interface BloomTransitionSceneHandle {
   readonly scene: Scene;

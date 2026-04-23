@@ -13,11 +13,7 @@ import { CitronBloomComponent } from '@/components/citronBloomComponent';
 import { SideCurtainParticlesComponent } from '@/components/sideCurtainParticles';
 import { Sections3DComponent } from '@/components/sections3D';
 import type { FrameContext, ISystem, IComponent } from '@/types';
-import { smoothstep } from '@/utils/math';
-import {
-  createBloomTransitionScene,
-  type BloomTransitionSceneHandle,
-} from '@citron-bloom-engine/examples/createBloomTransitionScene';
+import { clamp, smoothstep } from '@/utils/math';
 import { CitronBloomComposer } from '@citron-bloom-engine/bloom-postprocess/citronBloomComposer';
 import { BloomExperienceSwapController } from '@citron-bloom-engine/bloom-runtime/bloomExperienceTransition';
 import { resolveBloomJourneyVisualStyle } from '@citron-bloom-engine/bloom-runtime/bloomJourneyVisualStyle';
@@ -43,9 +39,7 @@ import {
 } from '@/core/studioEnvironment';
 import { initCookieConsent } from '@/ui/cookieConsent';
 import { initNavChrome, updateNavChrome } from '@/ui/navChrome';
-import { PORTFOLIO_PROJECTS } from '@/data/portfolioProjects';
 import {
-  computeJourneyDualSceneBlend,
   computeJourneySectionTransitionFx,
   journeyCumulativeStops,
   resolveJourney,
@@ -56,11 +50,6 @@ import {
   syncJourneyFog,
   type JourneyWebSceneHandle,
 } from '@/journey/journeyWebScene';
-import { initPortfolioChat } from '@/ui/portfolioChatStub';
-import {
-  clearPortfolioScrollNavigator,
-  registerPortfolioScrollNavigator,
-} from '@/ui/portfolioNavigator';
 
 /**
  * Citron Bloom is the default experience. Use `?fluid` for the legacy raymarched flower, or
@@ -128,7 +117,6 @@ export class Inkblot {
   private journeyWeb: JourneyWebSceneHandle | null = null;
   private prevJourneySection: number | null = null;
   private journeyTransitionPulse = 0;
-  private transitionSceneHandle: BloomTransitionSceneHandle | null = null;
   private readonly bloomSwap = new BloomExperienceSwapController();
   private studioEnvironment: StudioEnvironmentHandle | null = null;
   private liquidRibbon: PointerLiquidRibbonHandle | null = null;
@@ -232,21 +220,12 @@ export class Inkblot {
     this.camera.resize(this.renderer.viewport);
 
     if (this.postprocessing instanceof CitronBloomComposer) {
-      if (this.bloomExperienceId === 'flower') {
-        this.transitionSceneHandle = createBloomTransitionScene();
-        this.postprocessing.init(
-          this.renderer.instance,
-          this.scene.instance,
-          this.camera.instance,
-          this.transitionSceneHandle.scene,
-        );
-      } else {
-        this.postprocessing.init(
-          this.renderer.instance,
-          this.scene.instance,
-          this.camera.instance,
-        );
-      }
+      /** Flower mode uses DOM work panel only — no 3D transition card (it read as a floating plane). */
+      this.postprocessing.init(
+        this.renderer.instance,
+        this.scene.instance,
+        this.camera.instance,
+      );
     } else {
       this.postprocessing.init(this.renderer.instance);
     }
@@ -268,9 +247,8 @@ export class Inkblot {
     }
 
     if (this.useCitronBloom && this.bloomExperienceId === 'flower') {
-      this.journeyWeb = createJourneyWebScene(PORTFOLIO_PROJECTS, this.citronBloomLod);
+      this.journeyWeb = createJourneyWebScene();
       this.scene.instance.add(this.journeyWeb.root);
-      initPortfolioChat();
     }
 
     if (this.useCitronBloom) {
@@ -280,8 +258,6 @@ export class Inkblot {
 
     initNavChrome(this.audioSystem);
     initCookieConsent();
-
-    registerPortfolioScrollNavigator((p) => this.scrollSystem.scrollToProgress(p));
 
     this.onResize();
 
@@ -309,12 +285,29 @@ export class Inkblot {
     }
   }
 
+  /**
+   * Map scroll to [0,1] for the journey only (see `#virtual-scroll-space`), so in-flow
+   * content after that spacer does not compress the 3D acts.
+   */
+  private getJourneyNormalizedProgress(): number {
+    if (typeof document === 'undefined') {
+      return this.scrollSystem.progress;
+    }
+    const vs = document.getElementById('virtual-scroll-space');
+    if (!vs) {
+      return this.scrollSystem.progress;
+    }
+    const maxJourney = Math.max(0, vs.offsetTop + vs.offsetHeight - window.innerHeight);
+    if (maxJourney < 1) {
+      return 0;
+    }
+    const sy = window.scrollY || 0;
+    return clamp(sy / maxJourney, 0, 1);
+  }
+
   private initStudioEnvironment(): void {
     const env = createStudioEnvironment(this.renderer.instance);
     this.scene.setEnvironment(env.texture);
-    if (this.transitionSceneHandle) {
-      this.transitionSceneHandle.scene.environment = env.texture;
-    }
     bloomExperienceRegistry.getActive()?.setEnvMap?.(env.texture, 1.5);
     this.studioEnvironment = env;
   }
@@ -350,7 +343,11 @@ export class Inkblot {
       }
     }
     this.interactionSystem.update(this.frameContext);
-    this.animationSystem.setScrollProgress(this.scrollSystem.progress);
+    const progressFor3d =
+      this.useCitronBloom && this.activeBloomExperienceId === 'flower'
+        ? this.getJourneyNormalizedProgress()
+        : this.scrollSystem.progress;
+    this.animationSystem.setScrollProgress(progressFor3d);
     if (this.useCitronBloom) {
       this.animationSystem.setPointerNdc(
         this.interactionSystem.pointer.x,
@@ -385,22 +382,19 @@ export class Inkblot {
           if (this.postprocessing instanceof CitronBloomComposer) {
             this.postprocessing.setSceneTransition(0, 0, 0, 0);
           }
-          if (this.transitionSceneHandle) this.transitionSceneHandle.scene.visible = false;
         } else {
           if (this.journeyWeb) this.journeyWeb.root.visible = true;
-          if (this.transitionSceneHandle) this.transitionSceneHandle.scene.visible = true;
         }
       },
     });
 
     if (this.useCitronBloom && this.activeBloomExperienceId === 'flower') {
-      const journey = resolveJourney(this.scrollSystem.progress);
+      const journey = resolveJourney(progressFor3d);
       document.documentElement.style.setProperty('--journey-section', String(journey.section));
       document.documentElement.style.setProperty('--journey-local', String(journey.localT));
       document.body.dataset.journeySection = String(journey.section);
       const stops = journeyCumulativeStops();
       const s0End = stops[1];
-      const s1End = stops[2];
       const g = journey.globalT;
 
       if (this.prevJourneySection !== null && this.prevJourneySection !== journey.section) {
@@ -418,20 +412,14 @@ export class Inkblot {
         String(Math.min(1, Math.pow(edge * 2.4, 1.15))),
       );
 
-      let heroOpacity = 0;
+      let workOpacity = 0;
       if (journey.section === 1) {
-        const fadeIn = smoothstep(s0End + 0.004, s0End + 0.058, g);
-        const fadeOut = 1 - smoothstep(s1End - 0.055, s1End + 0.04, g);
-        heroOpacity = Math.min(fadeIn, fadeOut);
+        workOpacity = smoothstep(0, 0.22, journey.localT);
       }
-      document.documentElement.style.setProperty('--journey-hero-ui', String(heroOpacity));
+      document.documentElement.style.setProperty('--journey-work-ui', String(workOpacity));
 
       const bloomCss =
-        journey.section === 0
-          ? bloomScrollDrive(journey.localT)
-          : journey.section === 5
-            ? bloomScrollDrive(1 - journey.localT)
-            : 1;
+        journey.section === 0 ? bloomScrollDrive(journey.localT) : 1;
       document.documentElement.style.setProperty('--bloom-scroll', String(bloomCss));
 
       this.animationSystem.setJourneyFlower({
@@ -446,7 +434,7 @@ export class Inkblot {
           renderer: this.renderer.instance,
           elapsed,
           delta,
-          heroOpacity,
+          heroOpacity: 0,
         });
       }
 
@@ -456,33 +444,22 @@ export class Inkblot {
           flowerRoot.visible = true;
           const fo = 1 - smoothstep(s0End - 0.125, s0End - 0.012, g);
           setMeshTreeOpacity(flowerRoot, fo);
-        } else if (journey.section === 5) {
-          flowerRoot.visible = true;
-          setMeshTreeOpacity(flowerRoot, 1);
         } else {
           flowerRoot.visible = false;
         }
       }
 
-      let drive = 1;
-      if (journey.section === 0) drive = bloomScrollDrive(journey.localT);
-      else if (journey.section === 5) drive = bloomScrollDrive(1 - journey.localT);
+      const drive =
+        journey.section === 0 ? bloomScrollDrive(journey.localT) : 1;
       this.citronBloomComponent?.applyBloomDrive(drive);
 
       const transitionFxFloor = computeJourneySectionTransitionFx(journey);
-      const allowCameraBelowGround =
-        journey.section === 5 ||
-        transitionFxFloor > 0.14 ||
-        this.journeyTransitionPulse > 0.32;
+      const allowCameraBelowGround = transitionFxFloor > 0.14 || this.journeyTransitionPulse > 0.32;
       this.camera.setWorldPositionMinY(
         allowCameraBelowGround
           ? null
           : FLOWER_GROUND_PLANE_WORLD_Y + FLOWER_CAMERA_CLEARANCE_ABOVE_GROUND,
       );
-
-      if (this.transitionSceneHandle) {
-        this.transitionSceneHandle.scene.visible = journey.section !== 1;
-      }
 
       this.journeyTransitionPulse *= Math.exp(-delta * 1.45);
     } else if (this.useCitronBloom) {
@@ -492,7 +469,7 @@ export class Inkblot {
       this.animationSystem.setJourneyFlower(null);
       document.documentElement.style.removeProperty('--journey-section');
       document.documentElement.style.removeProperty('--journey-local');
-      document.documentElement.style.removeProperty('--journey-hero-ui');
+      document.documentElement.style.removeProperty('--journey-work-ui');
       document.documentElement.style.removeProperty('--journey-edge');
       this.prevJourneySection = null;
       delete document.body.dataset.journeySection;
@@ -517,7 +494,7 @@ export class Inkblot {
     }
 
     if (this.citronBloomComponent && this.useCitronBloom && this.activeBloomExperienceId === 'flower') {
-      const j = resolveJourney(this.scrollSystem.progress);
+      const j = resolveJourney(progressFor3d);
       /**
        * scrollReveal: long ease near document top so a fast scroll-up doesn’t slam gate (and pollen) to 0.
        */
@@ -561,32 +538,12 @@ export class Inkblot {
       this.journeyWeb.syncEnvParticlesCamera(this.frameContext.camera);
     }
 
-    if (
-      this.transitionSceneHandle &&
-      this.useCitronBloom &&
-      this.activeBloomExperienceId === 'flower' &&
-      this.transitionSceneHandle.scene.visible
-    ) {
-      this.transitionSceneHandle.update(elapsed, this.camera.instance);
-    }
-
-    if (this.postprocessing instanceof CitronBloomComposer && this.postprocessing.hasDualSceneBlend()) {
-      let blend = 0;
-      let transitionFx = 0;
-      if (this.useCitronBloom && this.activeBloomExperienceId === 'flower') {
-        const j = resolveJourney(this.scrollSystem.progress);
-        blend = computeJourneyDualSceneBlend(j);
-        transitionFx = computeJourneySectionTransitionFx(j);
-      }
-      this.postprocessing.setSceneTransition(blend, 0, 0, transitionFx);
-    }
-
     if (this.postprocessing instanceof CitronBloomComposer) {
       let localT = 0;
       let pulse = this.journeyTransitionPulse;
       let style = 0;
       if (this.useCitronBloom && this.activeBloomExperienceId === 'flower') {
-        const j = resolveJourney(this.scrollSystem.progress);
+        const j = resolveJourney(progressFor3d);
         style = resolveBloomJourneyVisualStyle('flower', j.section);
         localT = j.localT;
       } else if (this.useCitronBloom) {
@@ -599,7 +556,7 @@ export class Inkblot {
 
     let shardJourneySection = -1;
     if (this.useCitronBloom && this.activeBloomExperienceId === 'flower') {
-      shardJourneySection = resolveJourney(this.scrollSystem.progress).section;
+      shardJourneySection = resolveJourney(progressFor3d).section;
     }
 
     this.liquidRibbon?.update({
@@ -635,17 +592,12 @@ export class Inkblot {
     this.renderer.instance.setAnimationLoop(null);
     window.removeEventListener('resize', this.onResize);
 
-    clearPortfolioScrollNavigator();
-
     for (const component of this.components) component.dispose();
     for (const system of this.systems) system.dispose();
 
     this.journeyWeb?.root.removeFromParent();
     this.journeyWeb?.dispose();
     this.journeyWeb = null;
-
-    this.transitionSceneHandle?.dispose();
-    this.transitionSceneHandle = null;
 
     this.scene.instance.environment = null;
     this.studioEnvironment?.dispose();

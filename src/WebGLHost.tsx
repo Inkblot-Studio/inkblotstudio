@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import type { Inkblot } from './inkblotApp';
+import { reportEngineResult } from './ui/loading/engineResult';
 
 /**
  * Keeps the Three.js loop outside React render; loads the engine in a separate chunk.
@@ -19,18 +20,11 @@ export function WebGLHost() {
           return;
         }
         ink = mod.mountInkblot(el);
-        
-        // Fade out splash screen once engine resolves
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-          splash.classList.add('is-loaded');
-          setTimeout(() => {
-            if (splash.parentNode) splash.remove();
-          }, 800); // Wait for the transition to finish
-        }
+        reportEngineResult(true);
       })
       .catch((err) => {
         console.error('[Inkblot] Failed to load engine chunk', err);
+        reportEngineResult(false, err);
       });
 
     return () => {

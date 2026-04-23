@@ -19,7 +19,7 @@ export function clearPortfolioScrollNavigator(): void {
 
 function progressAtSectionStart(section: number, inset = 0.035): number {
   const stops = journeyCumulativeStops(getJourneySectionWeights());
-  const s = Math.floor(clamp(section, 0, 5));
+  const s = Math.floor(clamp(section, 0, 1));
   return clamp((stops[s] ?? 0) + inset, 0, 0.996);
 }
 
@@ -43,7 +43,7 @@ export function handlePortfolioChatQuery(raw: string): { reply: string; scrolled
   if (/^(hi|hello|hey)\b/.test(q)) {
     return {
       reply:
-        'You can say: “show me the flower”, “take me to work”, “water”, “the lab”, or “finale”. Try “help” for more.',
+        'You can say: “flower” or “work”. Try “help” for more.',
       scrolled: false,
     };
   }
@@ -51,7 +51,7 @@ export function handlePortfolioChatQuery(raw: string): { reply: string; scrolled
   if (/\b(help|commands|\?)\b/.test(q) || /what can (you|i)/.test(q)) {
     return {
       reply:
-        'Destinations: flower · hero / logo · work / portfolio · water · lab · end / finale · top. For the glass showcase orbit, open with ?experience=stomp on the URL.',
+        'Destinations: flower / bloom · work / portfolio. Orbit showcase: ?experience=stomp',
       scrolled: false,
     };
   }
@@ -66,34 +66,9 @@ export function handlePortfolioChatQuery(raw: string): { reply: string; scrolled
     return { reply: 'Moving to the bloom…', scrolled: true };
   }
 
-  if (/\b(hero|logo|glass)\b/.test(q)) {
-    scrollImpl(progressAtSectionStart(1, 0.04));
-    return { reply: 'Sliding to the hero…', scrolled: true };
-  }
-
-  if (/\b(work|portfolio|projects?|carousel)\b/.test(q)) {
-    scrollImpl(progressAtSectionStart(2, 0.05));
-    return { reply: 'Opening the work arc…', scrolled: true };
-  }
-
-  if (/\b(water|cathedral|reflection)\b/.test(q)) {
-    scrollImpl(progressAtSectionStart(3, 0.05));
-    return { reply: 'Drifting to the water act…', scrolled: true };
-  }
-
-  if (/\b(lab|labs|r\s*&\s*d|research|prototype)\b/.test(q)) {
-    scrollImpl(progressAtSectionStart(4, 0.05));
-    return { reply: 'Heading to the lab…', scrolled: true };
-  }
-
-  if (/\b(end|finale|closing|outro)\b/.test(q)) {
-    scrollImpl(progressAtSectionStart(5, 0.06));
-    return { reply: 'Closing movement…', scrolled: true };
-  }
-
-  if (/\b(fun|cool|best)\b/.test(q) && /\b(project|work|show)\b/.test(q)) {
-    scrollImpl(progressAtSectionStart(2, 0.12));
-    return { reply: 'Here’s the work reel — scroll the carousel in-scene.', scrolled: true };
+  if (/\b(work|portfolio|partners?|clients?|carousel|logo|glass|hero)\b/.test(q)) {
+    scrollImpl(progressAtSectionStart(1, 0.05));
+    return { reply: 'Opening the work section…', scrolled: true };
   }
 
   if (/\b(stomp|showcase|orbit)\b/.test(q)) {
@@ -106,7 +81,7 @@ export function handlePortfolioChatQuery(raw: string): { reply: string; scrolled
 
   return {
     reply:
-      'I didn’t catch a destination. Try “flower”, “work”, “water”, “lab”, or “help”.',
+      'I didn’t catch a destination. Try “flower” or “work”, or “help”.',
     scrolled: false,
   };
 }
