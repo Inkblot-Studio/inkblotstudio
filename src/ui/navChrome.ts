@@ -70,11 +70,12 @@ function updateMiniPlayerCredits(audio: AudioSystem): void {
   fillMarqueeRow(wrapTitle, titleView, titleTrack, line);
 }
 let petalPulseSmoothed = 0.26;
-/** Phase for slow idle wobble on the mini EQ. */
+/** Phase for idle breathing on the audio “signal” glyph. */
 let adVizSwirl = 0;
-const AD_BANDS = 8;
-/** Smoothed 0..1 per-band levels (8-band spectrum in updateNavChrome). */
-let adBars: number[] = [0.35, 0.36, 0.37, 0.38, 0.35, 0.36, 0.34, 0.35];
+/** Core level 0..1 — drives dot + halo (not bar EQ). */
+let signalSmoothed = 0.34;
+/** Lagging level for the ring (follows core for a softer echo). */
+let signalRingSmoothed = 0.32;
 
 let drawerFocusReturn: HTMLElement | null = null;
 
@@ -493,34 +494,49 @@ export function updateNavChrome(
     const lf = audio.lowFrequencyVolume;
     const hf = audio.highFrequencyVolume;
     const b = audio.beatEnvelope;
-    const p = petalPulseSmoothed;
     const playing = audio.isPlaying;
-    adVizSwirl = (adVizSwirl + d * 0.55) % 62.83;
+    adVizSwirl = (adVizSwirl + d * 0.8) % 62.83;
     const t = adVizSwirl;
-    const aBar = 1 - Math.exp(-2.6 * d);
+    const aSig = 1 - Math.exp(-5.8 * d);
+    const aRing = 1 - Math.exp(-3.2 * d);
     const s8 = audio.spectrum8;
-    for (let i = 0; i < AD_BANDS; i++) {
-      let u: number;
-      if (playing) {
-        const raw = s8[i] ?? 0;
-        u =
-          0.08 +
-          0.9 *
-            Math.min(
-              1,
-              raw * (0.92 + 0.08 * (i + 1) * 0.12) +
-                (i < 2 ? 0.12 * lf : 0) +
-                (i >= 2 && i <= 4 ? 0.1 * p : 0) +
-                (i > 4 ? 0.1 * hf : 0) +
-                (i >= 5 ? 0.08 * b : 0),
-            );
-      } else {
-        u = 0.2 + 0.15 * Math.sin(t * 0.42 + i * 0.45 + (i & 1) * 0.2);
-      }
-      u = Math.min(0.99, Math.max(0.08, u));
-      adBars[i] += (u - adBars[i]!) * aBar;
-      audioToggle.style.setProperty(`--ad-b${i}`, adBars[i]!.toFixed(3));
+    let specSum = 0;
+    let specPeak = 0;
+    for (let i = 0; i < 8; i++) {
+      const v = s8[i] ?? 0;
+      specSum += v;
+      if (v > specPeak) specPeak = v;
     }
+    const specAvg = specSum / 8;
+    let target: number;
+    if (playing) {
+      const shimmer = 0.045 * Math.sin(t * 1.15) + 0.025 * Math.sin(t * 2.1 + 0.4);
+      target = Math.min(
+        0.99,
+        Math.max(
+          0.1,
+          0.1 +
+            0.3 * lf +
+            0.16 * hf +
+            0.24 * b +
+            0.24 * specAvg +
+            0.2 * specPeak +
+            shimmer,
+        ),
+      );
+    } else {
+      target =
+        0.14 + 0.2 * Math.sin(t * 0.55) + 0.1 * Math.sin(t * 0.88 + 0.5) + 0.04 * Math.sin(t * 1.6);
+    }
+    target = Math.min(0.99, Math.max(0.08, target));
+    signalSmoothed += (target - signalSmoothed) * aSig;
+    const ringTarget = Math.min(
+      0.99,
+      Math.max(0.1, 0.78 * signalSmoothed + 0.2 * b + 0.16 * specPeak + 0.04 * Math.sin(t * 0.9)),
+    );
+    signalRingSmoothed += (ringTarget - signalRingSmoothed) * aRing;
+    audioToggle.style.setProperty('--audio-signal', signalSmoothed.toFixed(3));
+    audioToggle.style.setProperty('--audio-signal-ring', signalRingSmoothed.toFixed(3));
   }
 
   updateMiniPlayerCredits(audio);

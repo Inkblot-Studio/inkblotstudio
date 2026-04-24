@@ -357,8 +357,9 @@ export class AudioSystem implements ISystem {
       for (let i = i0; i < i1; i++) s += d[i]!;
       const w = i1 - i0;
       const mag = w > 0 ? s / w / 255.0 : 0;
-      const lifted = Math.min(1, Math.pow(mag, 0.5) * 1.12 + (b <= 1 ? 0.04 : 0));
-      this.spectrum8[b] = damp(this.spectrum8[b]!, lifted, 15, ctx.delta);
+      // Less compression, slightly louder mapping so the nav meter visibly dances.
+      const lifted = Math.min(1, Math.pow(mag, 0.38) * 1.45 + (b <= 1 ? 0.05 : 0));
+      this.spectrum8[b] = damp(this.spectrum8[b]!, lifted, 10.5, ctx.delta);
     }
 
     this.beatEnvelope *= Math.exp(-ctx.delta * 2.4);

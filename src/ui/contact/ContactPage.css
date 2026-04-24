@@ -578,76 +578,95 @@ a.contact-page__office-line--link:focus-visible {
   pointer-events: none;
 }
 
+/* Shared: light page / sheet behind shell — warm ink, no cyan or sky blue. */
+body.contact-page-open,
+body.inkblot-light-chrome {
+  --contact-chrome-ink: #14110e;
+  --contact-chrome-ink-soft: #5c534a;
+  /* Focus / emphasis (warm, not #22d3ee) */
+  --contact-chrome-focus: rgba(26, 22, 18, 0.42);
+  --contact-chrome-surface: rgba(22, 20, 18, 0.94);
+  --contact-chrome-surface-hover: rgba(32, 28, 24, 0.96);
+  --contact-chrome-line: rgba(90, 82, 74, 0.38);
+  --contact-chrome-line-soft: rgba(90, 82, 74, 0.2);
+}
+
 body.contact-page-open {
   overflow: hidden;
-  /* Dark shell over the light contact sheet (nav / brand / audio) */
-  --contact-chrome-ink: #0b1220;
-  --contact-chrome-ink-soft: #475569;
-  --contact-chrome-ice: #22d3ee;
-  --contact-chrome-surface: rgba(15, 23, 42, 0.94);
-  --contact-chrome-surface-hover: rgba(30, 41, 59, 0.96);
-  --contact-chrome-line: rgba(148, 163, 184, 0.4);
-  --contact-chrome-line-soft: rgba(148, 163, 184, 0.22);
 }
 
 /* Shell above the contact sheet (z 45): nav, logo, audio, scroll thumb, site menu */
-body.contact-page-open #ui-layer {
+body.contact-page-open #ui-layer,
+body.inkblot-light-chrome #ui-layer {
   z-index: 50;
 }
 
-body.contact-page-open .audio-dock {
+body.contact-page-open .audio-dock,
+body.inkblot-light-chrome .audio-dock {
   z-index: 50;
 }
 
-body.contact-page-open .custom-scroll-rail {
+body.contact-page-open .custom-scroll-rail,
+body.inkblot-light-chrome .custom-scroll-rail {
   z-index: 50;
 }
 
-body.contact-page-open .site-drawer {
+body.contact-page-open .site-drawer,
+body.inkblot-light-chrome .site-drawer {
   z-index: 50;
 }
 
 /* With contact open, drawer and chrome were both z 50 — drawer covered the hamburger. Keep shell above. */
 body.contact-page-open.site-drawer-open #ui-layer,
-body.contact-page-open.site-drawer-open .audio-dock {
+body.contact-page-open.site-drawer-open .audio-dock,
+body.inkblot-light-chrome.site-drawer-open #ui-layer,
+body.inkblot-light-chrome.site-drawer-open .audio-dock {
   z-index: 60;
 }
 
 /* —— Dark chrome: logo + wordmark —— */
-body.contact-page-open .brand-row {
+body.contact-page-open .brand-row,
+body.inkblot-light-chrome .brand-row {
   color: var(--contact-chrome-ink);
 }
 
 body.contact-page-open .brand-row .inkblot,
-body.contact-page-open .brand-row .studio {
+body.contact-page-open .brand-row .studio,
+body.inkblot-light-chrome .brand-row .inkblot,
+body.inkblot-light-chrome .brand-row .studio {
   color: var(--contact-chrome-ink);
 }
 
-body.contact-page-open .brand-row .tm {
+body.contact-page-open .brand-row .tm,
+body.inkblot-light-chrome .brand-row .tm {
   color: var(--contact-chrome-ink-soft);
   opacity: 0.72;
 }
 
-body.contact-page-open .brand-row__mark {
+body.contact-page-open .brand-row__mark,
+body.inkblot-light-chrome .brand-row__mark {
   opacity: 1;
 }
 
 /* —— Nav cluster: override cinematic light ink + glass (incl. flower journey) —— */
 body.contact-page-open .nav-stack-top-right,
-body.contact-page-open.journey-flower-active .nav-stack-top-right {
+body.contact-page-open.journey-flower-active .nav-stack-top-right,
+body.inkblot-light-chrome .nav-stack-top-right,
+body.inkblot-light-chrome.journey-flower-active .nav-stack-top-right {
   --nav-ink: var(--contact-chrome-ink);
-  --nav-ink-dim: color-mix(in srgb, var(--contact-chrome-ink-soft) 85%, var(--contact-chrome-ice) 15%);
-  --nav-accent: #22d3ee;
-  --nav-accent-2: #a78bfa;
-  --nav-glass-fill: color-mix(in srgb, #ffffff 12%, rgba(15, 23, 42, 0.88) 88%);
-  --nav-glass-deep: color-mix(in srgb, #0f172a 78%, #f8fafc 22%);
+  --nav-ink-dim: color-mix(in srgb, var(--contact-chrome-ink-soft) 88%, #7a6e62 12%);
+  --nav-accent: #7a6e62;
+  --nav-accent-2: #9a8a7a;
+  --nav-glass-fill: color-mix(in srgb, #f8f4ef 10%, rgba(18, 16, 14, 0.9) 90%);
+  --nav-glass-deep: color-mix(in srgb, #0c0a08 80%, #f5f0ea 20%);
   --nav-chrome-glow: 0.28;
 }
 
 /* Nav links: stacked Outfit/Fraunces swap in index.html; keep ink on this shell */
 
 /* —— Menu (hamburger) button —— Black on the light contact sheet; drawer open keeps same (see index for white↔black on main site) */
-body.contact-page-open .nav-menu-btn {
+body.contact-page-open .nav-menu-btn,
+body.inkblot-light-chrome .nav-menu-btn {
   background: #0a0a0a;
   color: #f5f0eb;
   border-color: #0a0a0a;
@@ -655,110 +674,164 @@ body.contact-page-open .nav-menu-btn {
 }
 
 body.contact-page-open .nav-menu-btn:hover,
-body.contact-page-open .nav-menu-btn:focus-visible {
+body.contact-page-open .nav-menu-btn:focus-visible,
+body.inkblot-light-chrome .nav-menu-btn:hover,
+body.inkblot-light-chrome .nav-menu-btn:focus-visible {
   background: #121110;
   color: #fff;
   border-color: #1a1810;
   box-shadow: none;
 }
 
-body.contact-page-open .nav-menu-btn:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--contact-chrome-ice) 45%, transparent);
+body.contact-page-open .nav-menu-btn:focus-visible,
+body.inkblot-light-chrome .nav-menu-btn:focus-visible {
+  outline: 2px solid var(--contact-chrome-focus);
   outline-offset: 2px;
 }
 
 /* —— Audio dock —— */
-body.contact-page-open .audio-dock {
-  --ad-ink: #e2e8f0;
+body.contact-page-open .audio-dock,
+body.inkblot-light-chrome .audio-dock {
+  --ad-ink: #e8e4de;
 }
 
-body.contact-page-open .audio-dock__shell {
+body.contact-page-open .audio-dock__shell,
+body.inkblot-light-chrome .audio-dock__shell {
   background: var(--contact-chrome-surface);
   border-color: var(--contact-chrome-line);
   box-shadow: 0 2px 18px rgba(0, 0, 0, 0.2);
 }
 
-/* Black disc on light contact shell; light EQ rings in rules below */
-body.contact-page-open .audio-dock__eq-btn {
-  background: #0a0a0a;
-  color: #94a3b8;
-  border-color: #1e293b;
+/*
+ * Light-shell audio: dark disc, warm off-white “ink” (inverse of the main 3D shell).
+ * No blue in halos / journey tint — use --journey-rail (paper/warm) only.
+ */
+body.contact-page-open .audio-dock__eq-btn,
+body.inkblot-light-chrome .audio-dock__eq-btn {
+  background: #0c0b09;
+  color: #e8e4de;
+  border-color: color-mix(in srgb, var(--contact-chrome-line) 70%, #1a1814 30%);
   box-shadow: none;
 }
 
-body.contact-page-open .audio-dock__eq-btn:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--contact-chrome-ice) 45%, transparent);
+body.contact-page-open .audio-dock__eq-btn:hover,
+body.contact-page-open .audio-dock__eq-btn:focus-visible,
+body.inkblot-light-chrome .audio-dock__eq-btn:hover,
+body.inkblot-light-chrome .audio-dock__eq-btn:focus-visible {
+  background: #14120f;
+  color: #f5f0ea;
+  border-color: #3a342e;
+}
+
+body.contact-page-open .audio-dock__eq-btn:focus-visible,
+body.inkblot-light-chrome .audio-dock__eq-btn:focus-visible {
+  outline: 2px solid var(--contact-chrome-focus);
   outline-offset: 2px;
 }
 
 body.contact-page-open .audio-dock--liquid .nav-player-wrap:hover,
-body.contact-page-open .audio-dock--liquid .nav-player-wrap:focus-within {
-  background: color-mix(in srgb, #ffffff 6%, #0f172a 94%);
+body.contact-page-open .audio-dock--liquid .nav-player-wrap:focus-within,
+body.inkblot-light-chrome .audio-dock--liquid .nav-player-wrap:hover,
+body.inkblot-light-chrome .audio-dock--liquid .nav-player-wrap:focus-within {
+  background: color-mix(in srgb, #2a2420 8%, #0c0a08 92%);
 }
 
-body.contact-page-open .nav-mini-mq-seg {
-  color: #94a3b8;
+body.contact-page-open .nav-mini-mq-seg,
+body.inkblot-light-chrome .nav-mini-mq-seg {
+  color: #8a7f74;
 }
 
-body.contact-page-open .nav-mini-btn {
-  color: #94a3b8;
+body.contact-page-open .nav-mini-btn,
+body.inkblot-light-chrome .nav-mini-btn {
+  color: #8a7f74;
 }
 
 body.contact-page-open .nav-mini-btn:hover,
-body.contact-page-open .nav-mini-btn:focus-visible {
-  color: #e2e8f0;
+body.contact-page-open .nav-mini-btn:focus-visible,
+body.inkblot-light-chrome .nav-mini-btn:hover,
+body.inkblot-light-chrome .nav-mini-btn:focus-visible {
+  color: #f0ebe4;
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* Mini EQ columns on black disc — light fill */
-body.contact-page-open .audio-dock__viz {
-  color: #94a3b8;
+/* Signal stack: light ink on dark */
+body.contact-page-open .audio-dock__signal,
+body.inkblot-light-chrome .audio-dock__signal {
+  color: #e6dfd6;
 }
 
-body.contact-page-open .audio-dock__eq-bar {
-  --eq-glow: 0.4;
-  background: linear-gradient(180deg, #cbd5e1 0%, #64748b 50%, #334155 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -2px 2px rgba(0, 0, 0, 0.45),
-    0 0 calc(4px + 5px * var(--bar-h, 0.45)) color-mix(in srgb, #94a3b8 30%, transparent);
-}
-
-body.contact-page-open.audio-active .audio-dock__eq-bar,
-body.contact-page-open.music-playing .audio-dock__eq-bar {
-  --eq-glow: 0.65;
-  background: linear-gradient(180deg, #f1f5f9 0%, #94a3b8 45%, #1e293b 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.5),
-    0 0 calc(5px + 8px * var(--bar-h, 0.5)) color-mix(in srgb, #e2e8f0 32%, transparent);
-}
-
-body.contact-page-open.journey-flower-active .audio-dock__eq-bar {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, #7dd3fc 40%, #f1f5f9) 0%,
-    color-mix(in srgb, #64748b 80%, var(--journey-rail, #0ea5e9) 20%) 50%,
-    #0f172a 100%
+body.contact-page-open .audio-dock__signal__halo,
+body.inkblot-light-chrome .audio-dock__signal__halo {
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in srgb, #e8e0d4 20%, transparent) 0%,
+    color-mix(in srgb, #b8a99a 6%, transparent) 50%,
+    transparent 70%
   );
+}
+
+body.contact-page-open .audio-dock__signal__ring,
+body.inkblot-light-chrome .audio-dock__signal__ring {
+  border-color: rgba(240, 234, 226, 0.28);
+}
+
+body.contact-page-open .audio-dock__signal__dot,
+body.inkblot-light-chrome .audio-dock__signal__dot {
+  background: #f0ebe4;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--journey-rail, #38bdf8) 40%, #fff 30%),
-    0 0 calc(6px + 7px * var(--bar-h, 0.5)) color-mix(in srgb, var(--journey-rail, #7dd3fc) 30%, transparent);
+    0 0 0 0.4px rgba(12, 10, 8, 0.25) inset,
+    0 0 calc(2px + 6px * var(--audio-signal, 0.34)) color-mix(in srgb, #f0ebe4 20%, transparent);
+}
+
+body.contact-page-open.audio-active .audio-dock__signal__halo,
+body.contact-page-open.music-playing .audio-dock__signal__halo,
+body.inkblot-light-chrome.audio-active .audio-dock__signal__halo,
+body.inkblot-light-chrome.music-playing .audio-dock__signal__halo {
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in srgb, #f2ebe3 24%, transparent) 0%,
+    color-mix(in srgb, #9a8a7a 9%, transparent) 55%,
+    transparent 72%
+  );
+}
+
+body.contact-page-open.music-playing .audio-dock__signal__dot,
+body.inkblot-light-chrome.music-playing .audio-dock__signal__dot {
+  background: #fffaf4;
+  box-shadow:
+    0 0 0 0.35px rgba(20, 18, 16, 0.28) inset,
+    0 0 calc(3px + 7px * var(--audio-signal, 0.34)) color-mix(in srgb, #e8e0d4 32%, transparent);
+}
+
+body.contact-page-open.journey-flower-active .audio-dock__signal,
+body.inkblot-light-chrome.journey-flower-active .audio-dock__signal {
+  color: color-mix(in srgb, #ece6de 78%, var(--journey-rail) 22%);
+}
+
+body.contact-page-open.journey-flower-active .audio-dock__signal__ring,
+body.inkblot-light-chrome.journey-flower-active .audio-dock__signal__ring {
+  border-color: color-mix(in srgb, var(--journey-rail) 40%, rgba(240, 234, 226, 0.2));
 }
 
 body.contact-page-open #canvas-container,
-body.contact-page-open .journey-scene-frame {
+body.contact-page-open .journey-scene-frame,
+body.inkblot-light-chrome #canvas-container,
+body.inkblot-light-chrome .journey-scene-frame {
   transition: opacity 0.5s var(--cp-spring);
   opacity: 0.9;
 }
 
 @media (prefers-reduced-motion: reduce) {
   body.contact-page-open #canvas-container,
-  body.contact-page-open .journey-scene-frame {
+  body.contact-page-open .journey-scene-frame,
+  body.inkblot-light-chrome #canvas-container,
+  body.inkblot-light-chrome .journey-scene-frame {
     transition: opacity 0.2s ease;
   }
   body.contact-page-open #canvas-container,
-  body.contact-page-open .journey-scene-frame {
+  body.contact-page-open .journey-scene-frame,
+  body.inkblot-light-chrome #canvas-container,
+  body.inkblot-light-chrome .journey-scene-frame {
     opacity: 0.95;
   }
 }

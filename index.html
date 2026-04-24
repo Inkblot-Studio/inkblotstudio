@@ -20,7 +20,8 @@
         --journey-local: 0;
         --journey-work-ui: 0;
         --journey-edge: 0;
-        --journey-rail: #7dd3fc;
+        /* Warm rail (no cool blue) — frame + audio tint follow act */
+        --journey-rail: #c4b2a0;
         --at-neon-flicker: 1;
         --at-neon-pulse: 0.45;
         --dominant: #2563EB;
@@ -252,9 +253,9 @@
       .nav-stack-top-right {
         --nav-island-w: min(90vw, 22rem);
         --nav-player-w: var(--nav-island-w);
-        /* Glass kit + accent (showcase default; flower journey overrides below) */
-        --nav-accent: #38bdf8;
-        --nav-accent-2: #a78bfa;
+        /* Glass kit + accent (warm; flower journey varies --journey-rail) */
+        --nav-accent: #b5a08e;
+        --nav-accent-2: #9a8a7a;
         --nav-ink: #f1f5f9;
         --nav-ink-dim: color-mix(in srgb, #cbd5e1 78%, var(--nav-accent));
         --nav-glass-fill: rgba(2, 8, 18, 0.34);
@@ -281,8 +282,8 @@
       }
 
       body.journey-flower-active .nav-stack-top-right {
-        --nav-accent: var(--journey-rail, #7dd3fc);
-        --nav-accent-2: color-mix(in srgb, var(--journey-rail, #7dd3fc) 50%, #e9d5ff);
+        --nav-accent: var(--journey-rail, #c4b2a0);
+        --nav-accent-2: color-mix(in srgb, var(--journey-rail) 50%, #b5a08e);
         --nav-chrome-glow: 0.62;
       }
 
@@ -595,14 +596,15 @@
         min-width: 40px;
         min-height: 40px;
         border-radius: 50%;
-        border: 1px solid #e2e0dc;
+        border: 1px solid #e2e8f0;
         margin: 0;
         padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        /* White disc like default hamburger; motion glyph is black inside (see .audio-dock__signal) */
         background: #fff;
-        color: #4a4640;
+        color: #1a1814;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
         box-shadow: none;
@@ -613,8 +615,17 @@
         user-select: none;
       }
 
+      .audio-dock__eq-btn:hover {
+        background: #faf9f7;
+        color: #0c0a08;
+        border-color: #d4d0ca;
+      }
+
       .audio-dock__eq-btn:focus-visible {
-        outline: 2px solid rgba(26, 24, 18, 0.18);
+        background: #faf9f7;
+        color: #0c0a08;
+        border-color: #d4d0ca;
+        outline: 2px solid rgba(26, 24, 20, 0.22);
         outline-offset: 2px;
       }
 
@@ -624,175 +635,120 @@
         transform-style: preserve-3d;
       }
 
-      /* Mini EQ: 8 bands — --ad-b0..7 from navChrome (spectrum8 + mix, 0..1) */
-      .audio-dock__viz {
+      /* Black “ink” on white: halo, ring, dot (audio-reactive) — --audio-signal, --audio-signal-ring */
+      .audio-dock__signal {
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 34px;
-        height: 20px;
+        width: 30px;
+        height: 30px;
         margin: 0 auto;
         pointer-events: none;
-        transform-style: preserve-3d;
-        transform-origin: 50% 50%;
-        color: #4a4640;
+        color: #0a0a0a;
+        isolation: isolate;
       }
 
-      .audio-dock__viz::after {
-        content: '';
+      .audio-dock__signal__halo {
         position: absolute;
         left: 50%;
-        bottom: -2px;
-        width: 130%;
-        height: 10px;
-        transform: translateX(-50%);
+        top: 50%;
+        width: 30px;
+        height: 30px;
+        margin: -15px 0 0 -15px;
         border-radius: 50%;
         background: radial-gradient(
-          ellipse 100% 100% at 50% 0%,
-          color-mix(in srgb, currentColor 14%, transparent 86%) 0%,
-          transparent 72%
+          circle at 50% 50%,
+          color-mix(in srgb, #0a0a0a 20%, transparent) 0%,
+          color-mix(in srgb, #0a0a0a 6%, transparent) 50%,
+          transparent 70%
         );
+        transform: scale(calc(0.65 + 0.5 * var(--audio-signal, 0.34)));
+        opacity: calc(0.28 + 0.62 * var(--audio-signal, 0.34));
+        filter: blur(0.2px);
+        transition:
+          transform 68ms cubic-bezier(0.25, 0.88, 0.28, 1),
+          opacity 0.16s ease;
         pointer-events: none;
         z-index: 0;
-        opacity: 0.9;
       }
 
-      .audio-dock__eq-bars {
-        position: relative;
+      .audio-dock__signal__ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border-radius: 50%;
+        box-sizing: border-box;
+        border: 1.25px solid rgba(10, 10, 10, 0.25);
+        opacity: calc(0.4 + 0.55 * var(--audio-signal-ring, 0.32));
+        transform: scale(calc(0.82 + 0.3 * var(--audio-signal-ring, 0.32)));
+        transition:
+          transform 78ms cubic-bezier(0.22, 0.9, 0.3, 1),
+          opacity 0.16s ease;
+        pointer-events: none;
         z-index: 1;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 1.5px;
-        width: 100%;
-        height: 18px;
       }
 
-      .audio-dock__eq-bar {
-        flex: 1 1 0;
-        min-width: 0;
-        --bar-h: 0.45;
-        --eq-glow: 0.35;
-        max-width: 3.5px;
-        height: 18px;
-        border-radius: 3px 3px 2px 2px;
-        transform-origin: 50% 100%;
-        transform: scaleY(calc(0.18 + (var(--bar-h, 0.4) * 0.82)));
-        will-change: transform;
-        backface-visibility: hidden;
-        background: linear-gradient(
-          180deg,
-          color-mix(in srgb, #b8b3ac 80%, #ffffff) 0%,
-          #5a5650 38%,
-          #2a2825 100%
-        );
+      .audio-dock__signal__dot {
+        position: relative;
+        z-index: 2;
+        display: block;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #0a0a0a;
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.28),
-          inset 0 -1px 0 rgba(0, 0, 0, 0.45),
-          0
-            0
-            calc(4px + 7px * var(--bar-h, 0.4) * var(--eq-glow, 0.35))
-            color-mix(in srgb, currentColor 24%, transparent);
-      }
-
-      .audio-dock__eq-bar:nth-child(1) {
-        max-width: 2.5px;
-        --bar-h: var(--ad-b0, 0.4);
-      }
-
-      .audio-dock__eq-bar:nth-child(2) {
-        max-width: 2.5px;
-        --bar-h: var(--ad-b1, 0.42);
-      }
-
-      .audio-dock__eq-bar:nth-child(3) {
-        max-width: 2.8px;
-        --bar-h: var(--ad-b2, 0.4);
-      }
-
-      .audio-dock__eq-bar:nth-child(4) {
-        max-width: 3.2px;
-        --bar-h: var(--ad-b3, 0.41);
-      }
-
-      .audio-dock__eq-bar:nth-child(5) {
-        max-width: 3.2px;
-        --bar-h: var(--ad-b4, 0.4);
-      }
-
-      .audio-dock__eq-bar:nth-child(6) {
-        max-width: 2.8px;
-        --bar-h: var(--ad-b5, 0.39);
-      }
-
-      .audio-dock__eq-bar:nth-child(7) {
-        max-width: 2.5px;
-        --bar-h: var(--ad-b6, 0.38);
-      }
-
-      .audio-dock__eq-bar:nth-child(8) {
-        max-width: 2.5px;
-        --bar-h: var(--ad-b7, 0.38);
+          0 0 0 0.4px rgba(255, 255, 255, 0.35) inset,
+          0 0 calc(2px + 6px * var(--audio-signal, 0.34)) color-mix(in srgb, #0a0a0a 22%, transparent);
+        transform: scale(calc(0.65 + 0.42 * var(--audio-signal, 0.34)));
+        transition: transform 60ms cubic-bezier(0.25, 0.9, 0.32, 1);
+        pointer-events: none;
+        will-change: transform;
       }
 
       #nav-audio-toggle {
-        --ad-b0: 0.35;
-        --ad-b1: 0.36;
-        --ad-b2: 0.34;
-        --ad-b3: 0.38;
-        --ad-b4: 0.36;
-        --ad-b5: 0.35;
-        --ad-b6: 0.33;
-        --ad-b7: 0.34;
+        --audio-signal: 0.34;
+        --audio-signal-ring: 0.32;
       }
 
-      body.audio-active .audio-dock__eq-bar {
-        --eq-glow: 0.55;
-        background: linear-gradient(
-          180deg,
-          color-mix(in srgb, #c9c4be 90%, #fff) 0%,
-          #4a4640 44%,
-          #151412 100%
+      body.audio-active .audio-dock__signal__halo {
+        opacity: calc(0.45 + 0.5 * var(--audio-signal, 0.34));
+        background: radial-gradient(
+          circle at 50% 50%,
+          color-mix(in srgb, #0a0a0a 26%, transparent) 0%,
+          color-mix(in srgb, #0a0a0a 8%, transparent) 52%,
+          transparent 72%
         );
-        box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.3),
-          inset 0 -2px 3px rgba(0, 0, 0, 0.5),
-          0 0 calc(5px + 9px * var(--bar-h, 0.5)) color-mix(in srgb, #e8e4df 32%, transparent);
       }
 
-      body.music-playing .audio-dock__eq-bar {
-        --eq-glow: 0.75;
-        background: linear-gradient(
-          180deg,
-          #d1ccc5 0%,
-          #2f2c28 46%,
-          #0a0908 100%
-        );
+      body.music-playing .audio-dock__signal__dot {
+        background: #000;
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.25),
-          inset 0 -2px 4px rgba(0, 0, 0, 0.55),
-          0 0 calc(6px + 12px * var(--bar-h, 0.55)) color-mix(in srgb, #f5f0e8 28%, transparent);
+          0 0 0 0.35px rgba(255, 255, 255, 0.4) inset,
+          0 0 calc(3px + 7px * var(--audio-signal, 0.34)) color-mix(in srgb, #0a0a0a 28%, transparent);
       }
 
-      body.journey-flower-active .audio-dock__eq-bar {
-        background: linear-gradient(
-          180deg,
-          color-mix(in srgb, #bfe8ff 35%, #d1ccc5) 0%,
-          color-mix(in srgb, #3a3834 88%, var(--journey-rail, #0ea5e9) 12%) 50%,
-          #0a0908 100%
+      body.journey-flower-active .audio-dock__signal__halo {
+        background: radial-gradient(
+          circle at 50% 50%,
+          color-mix(in srgb, var(--journey-rail) 22%, #0a0a0a) 0%,
+          color-mix(in srgb, #0a0a0a 8%, transparent) 52%,
+          transparent 70%
         );
-        box-shadow:
-          inset 0 1px 0 color-mix(in srgb, var(--journey-rail, #38bdf8) 35%, rgba(255, 255, 255, 0.2)),
-          inset 0 -2px 3px rgba(0, 0, 0, 0.5),
-          0 0 calc(7px + 10px * var(--bar-h, 0.5)) color-mix(in srgb, var(--journey-rail, #7dd3fc) 32%, transparent);
+      }
+
+      body.journey-flower-active .audio-dock__signal__ring {
+        border-color: color-mix(in srgb, var(--journey-rail) 45%, rgba(10, 10, 10, 0.28));
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .audio-dock__eq-bar {
-          transition: transform 0.1s ease;
+        .audio-dock__signal__halo,
+        .audio-dock__signal__ring,
+        .audio-dock__signal__dot {
+          transition-duration: 0.01ms;
         }
       }
 
@@ -1032,10 +988,10 @@
       }
 
       body.journey-flower-active[data-journey-section='0'] {
-        --journey-rail: #7dd3fc;
+        --journey-rail: #c9b4a0;
       }
       body.journey-flower-active[data-journey-section='1'] {
-        --journey-rail: #a5b4fc;
+        --journey-rail: #9a8a7a;
       }
 
       body.journey-boundary-flash::after {
@@ -1159,7 +1115,7 @@
         font-size: 0.62rem;
         letter-spacing: 0.3em;
         text-transform: uppercase;
-        color: color-mix(in srgb, #94a3b8 90%, #a5b4fc);
+        color: color-mix(in srgb, #94a3b8 91%, #a89888 9%);
         margin: 0 0 0.5rem;
       }
 
@@ -1189,7 +1145,7 @@
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.68rem;
         letter-spacing: 0.04em;
-        color: color-mix(in srgb, #7dd3fc 55%, var(--text-muted));
+        color: color-mix(in srgb, #b5a08e 48%, var(--text-muted));
         margin: 0;
       }
 
@@ -1282,9 +1238,23 @@
           min-width: 36px;
           min-height: 36px;
         }
-        .audio-dock__viz {
-          width: 30px;
+        .audio-dock__signal {
+          width: 28px;
+          height: 28px;
+        }
+        .audio-dock__signal__halo {
+          width: 24px;
+          height: 24px;
+          margin: -12px 0 0 -12px;
+        }
+        .audio-dock__signal__ring {
+          width: 18px;
           height: 18px;
+          margin: -9px 0 0 -9px;
+        }
+        .audio-dock__signal__dot {
+          width: 4.5px;
+          height: 4.5px;
         }
         .audio-dock--liquid .nav-player-wrap {
           min-width: min(8.5rem, 52vw);
@@ -1357,9 +1327,9 @@
         text-transform: uppercase;
         text-align: center;
         white-space: nowrap;
-        color: color-mix(in srgb, #e0f2fe 90%, #a5f3fc 10%);
+        color: color-mix(in srgb, #f4efe8 90%, #d4c4b0 10%);
         text-shadow:
-          0 0 24px color-mix(in srgb, #22d3ee 28%, transparent),
+          0 0 24px color-mix(in srgb, #9a8a78 24%, transparent),
           0 0 1px color-mix(in srgb, #020617 55%, transparent);
         opacity: clamp(0, calc((1 - var(--scroll-raw, 0) * 22) * 0.7), 1);
         transition: opacity 0.55s ease;
@@ -1515,7 +1485,7 @@
       }
 
       .cookie-consent__btn--primary:hover {
-        background: color-mix(in srgb, #2563eb 35%, #1e293b);
+        background: color-mix(in srgb, #4a4038 32%, #1e293b);
         border-color: color-mix(in srgb, var(--text-muted) 65%, transparent);
       }
 
@@ -1861,12 +1831,13 @@
         display: flex;
         flex-direction: column;
         gap: 0.4rem;
-        max-width: min(20rem, 100%);
+        width: min(20rem, 100%);
+        max-width: 20rem;
         text-align: left;
+        box-sizing: border-box;
       }
 
       .site-drawer__contact a {
-        position: relative;
         font-family: 'Outfit', system-ui, sans-serif;
         font-size: 0.78rem;
         font-weight: 400;
@@ -1875,21 +1846,17 @@
         text-decoration: none;
         color: #5a534b;
         transition: color 0.3s var(--sd-spring);
-        display: inline-flex;
+        display: flex;
         align-items: center;
         flex-direction: row;
+        flex-wrap: nowrap;
+        width: 100%;
         max-width: 100%;
-        vertical-align: top;
-        /* Reserve arrow column so one row’s hover never reflows the others. */
-        padding-left: 1.15em;
         box-sizing: border-box;
       }
 
       .site-drawer__contact a::before {
         content: '\21B3';
-        position: absolute;
-        left: 0;
-        top: 50%;
         flex: 0 0 auto;
         width: 0;
         min-width: 0;
@@ -1903,19 +1870,22 @@
         font-weight: 500;
         color: #1a1812;
         white-space: nowrap;
-        transform: translate3d(-0.12em, -50%, 0);
+        transform: translate3d(-0.1em, 0, 0);
+        align-self: center;
         transition:
           width 0.5s var(--sd-spring-draw),
           opacity 0.4s var(--sd-spring),
+          margin 0.5s var(--sd-spring-draw),
           transform 0.5s var(--sd-spring-draw);
         pointer-events: none;
       }
 
       .site-drawer__contact a:hover::before,
       .site-drawer__contact a:focus-visible::before {
-        width: 0.95em;
+        width: 0.88em;
         opacity: 0.9;
-        transform: translate3d(0, -50%, 0);
+        margin-right: 0.12em;
+        transform: translate3d(0, 0, 0);
       }
 
       .site-drawer__contact a:hover,
@@ -1931,24 +1901,25 @@
       .site-drawer__socials {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: flex-end;
         gap: 0.6rem;
-        text-align: left;
-        flex: 0 1 auto;
+        text-align: right;
+        flex: 0 0 auto;
+        /* Fixed line box: arrow + label; block sits on the right in the foot. */
+        width: min(13.5rem, 100%);
         min-width: 0;
-        max-width: min(12.5rem, calc(100% - 0.5rem));
-        padding-left: 0.35rem;
-        padding-right: 0.9rem;
-        margin-right: 0.45rem;
+        margin-left: auto;
+        padding-left: 0.75rem;
+        padding-right: 0.2rem;
         box-sizing: border-box;
       }
 
       .site-drawer__socials a {
-        position: relative;
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
         width: 100%;
         font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
         font-size: 0.62rem;
@@ -1959,15 +1930,11 @@
         color: #7a726a;
         transition: color 0.3s var(--sd-spring);
         box-sizing: border-box;
-        /* Same for every row: arrow draws in the gutter; column width stays fixed. */
-        padding-left: 1.1em;
+        min-width: 0;
       }
 
       .site-drawer__socials a::before {
         content: '\21B3';
-        position: absolute;
-        left: 0;
-        top: 50%;
         flex: 0 0 auto;
         width: 0;
         min-width: 0;
@@ -1981,19 +1948,22 @@
         letter-spacing: 0.02em;
         text-transform: none;
         white-space: nowrap;
-        transform: translate3d(-0.12em, -50%, 0);
+        transform: translate3d(-0.1em, 0, 0);
+        align-self: center;
         transition:
           width 0.5s var(--sd-spring-draw),
           opacity 0.38s var(--sd-spring),
+          margin 0.5s var(--sd-spring-draw),
           transform 0.5s var(--sd-spring-draw);
         pointer-events: none;
       }
 
       .site-drawer__socials a:hover::before,
       .site-drawer__socials a:focus-visible::before {
-        width: 0.95em;
+        width: 0.88em;
         opacity: 0.9;
-        transform: translate3d(0, -50%, 0);
+        margin-right: 0.12em;
+        transform: translate3d(0, 0, 0);
       }
 
       .site-drawer__socials a:hover,
@@ -2042,6 +2012,7 @@
           transition:
             width 0.12s ease,
             opacity 0.1s ease,
+            margin 0.12s ease,
             transform 0.12s ease;
         }
       }
@@ -2228,17 +2199,10 @@
             aria-label="Play or pause audio. Hold to show track and controls."
             aria-pressed="false"
           >
-            <span class="audio-dock__visual audio-dock__viz" aria-hidden="true">
-              <span class="audio-dock__eq-bars">
-                <span class="audio-dock__eq-bar"></span>
-                <span class="audio-dock__eq-bar"></span>
-                <span class="audio-dock__eq-bar"></span>
-                <span class="audio-dock__eq-bar"></span>
-                <span class="audio-dock__eq-bar"></span>
-                <span class="audio-dock__eq-bar"></span>
-                <span class="audio-dock__eq-bar"></span>
-                <span class="audio-dock__eq-bar"></span>
-              </span>
+            <span class="audio-dock__visual audio-dock__signal" aria-hidden="true">
+              <span class="audio-dock__signal__halo"></span>
+              <span class="audio-dock__signal__ring"></span>
+              <span class="audio-dock__signal__dot"></span>
             </span>
           </button>
           <div class="nav-player-wrap" id="nav-player-wrap" aria-hidden="true">
