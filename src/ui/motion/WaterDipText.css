@@ -1,0 +1,45 @@
+/* “Water dip” headline: last letter of each word first, then leftward; line-by-line. */
+.water-dip-text {
+  position: relative;
+  z-index: 0;
+  transform-style: preserve-3d;
+}
+
+.water-dip-text--surface::before {
+  content: '';
+  position: absolute;
+  inset: 8% -2% 12%;
+  border-radius: 48% 52% 48% 52% / 55% 48% 52% 45%;
+  background: radial-gradient(
+    ellipse 120% 70% at 50% 46%,
+    color-mix(in srgb, #22d3ee 14%, transparent 86%) 0%,
+    color-mix(in srgb, var(--cp-ink, #1a1812) 4%, transparent 96%) 52%,
+    transparent 72%
+  );
+  opacity: 0.38;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.water-dip-text__line {
+  display: block;
+  perspective: 920px;
+  transform-style: preserve-3d;
+}
+
+.water-dip-text__char {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  backface-visibility: hidden;
+}
+
+.water-dip-text__space {
+  min-width: 0.22em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .water-dip-text__char {
+    filter: none !important;
+    text-shadow: none !important;
+  }
+}

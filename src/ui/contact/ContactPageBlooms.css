@@ -7,26 +7,31 @@
   overflow: hidden;
 }
 
-.contact-bloom,
-.contact-page__bloom {
+.contact-bloom-wrap {
   position: absolute;
   color: color-mix(in srgb, var(--cp-ink) 11%, var(--cp-paper) 89%);
   pointer-events: none;
+  will-change: transform;
 }
 
-.contact-bloom__core,
-.contact-bloom .contact-bloom__core {
+.contact-bloom__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.contact-bloom__core {
   opacity: 0.35;
 }
 
-/* Sizes + positions (percent of overlay, bloom-scene is full viewport) */
+/* Positions + subtle drift (petals move as a whole) */
 .contact-page__bloom--a {
   width: min(5.5rem, 14vw);
   height: min(5.5rem, 14vw);
   top: 8%;
   left: 6%;
   opacity: 0.9;
-  transform: rotate(-8deg);
+  animation: bloomDriftA 24s ease-in-out infinite;
 }
 
 .contact-page__bloom--b {
@@ -35,7 +40,8 @@
   top: 18%;
   right: 12%;
   opacity: 0.75;
-  transform: rotate(14deg);
+  animation: bloomDriftB 19s ease-in-out infinite;
+  animation-delay: -4s;
 }
 
 .contact-page__bloom--c {
@@ -44,7 +50,8 @@
   left: 4%;
   bottom: 16%;
   opacity: 0.85;
-  transform: rotate(22deg);
+  animation: bloomDriftC 27s ease-in-out infinite;
+  animation-delay: -7s;
 }
 
 .contact-page__bloom--d {
@@ -53,30 +60,103 @@
   right: 8%;
   bottom: 22%;
   opacity: 0.7;
-  transform: rotate(-18deg);
+  animation: bloomDriftD 21s ease-in-out infinite;
+  animation-delay: -2s;
 }
 
-/* Mid-field, upper third — “guardian” at journey heart height */
 .contact-page__bloom--e {
   width: min(2.6rem, 7vw);
   height: min(2.6rem, 7vw);
   top: 42%;
   right: 20%;
   opacity: 0.55;
-  transform: rotate(6deg);
+  animation: bloomDriftE 23s ease-in-out infinite;
+  animation-delay: -11s;
+}
+
+@keyframes bloomDriftA {
+  0%,
+  100% {
+    transform: rotate(-8deg) translate(0, 0) scale(1);
+  }
+  50% {
+    transform: rotate(-4.5deg) translate(0.4rem, -0.28rem) scale(1.025);
+  }
+}
+
+@keyframes bloomDriftB {
+  0%,
+  100% {
+    transform: rotate(14deg) translate(0, 0) scale(1);
+  }
+  50% {
+    transform: rotate(11deg) translate(-0.25rem, 0.2rem) scale(1.04);
+  }
+}
+
+@keyframes bloomDriftC {
+  0%,
+  100% {
+    transform: rotate(22deg) translate(0, 0) scale(1);
+  }
+  50% {
+    transform: rotate(18deg) translate(0.3rem, 0.35rem) scale(0.98);
+  }
+}
+
+@keyframes bloomDriftD {
+  0%,
+  100% {
+    transform: rotate(-18deg) translate(0, 0) scale(1);
+  }
+  50% {
+    transform: rotate(-14deg) translate(-0.32rem, -0.18rem) scale(1.03);
+  }
+}
+
+@keyframes bloomDriftE {
+  0%,
+  100% {
+    transform: rotate(6deg) translate(0, 0) scale(1);
+  }
+  50% {
+    transform: rotate(9deg) translate(0.15rem, -0.22rem) scale(1.06);
+  }
 }
 
 @media (max-width: 520px) {
   .contact-page__bloom--b {
     right: 3%;
   }
+
   .contact-page__bloom--e {
     right: 8%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .contact-page__bloom {
-    transform: none;
+  .contact-bloom-wrap {
+    animation: none;
+    will-change: auto;
+  }
+
+  .contact-page__bloom--a {
+    transform: rotate(-8deg);
+  }
+
+  .contact-page__bloom--b {
+    transform: rotate(14deg);
+  }
+
+  .contact-page__bloom--c {
+    transform: rotate(22deg);
+  }
+
+  .contact-page__bloom--d {
+    transform: rotate(-18deg);
+  }
+
+  .contact-page__bloom--e {
+    transform: rotate(6deg);
   }
 }

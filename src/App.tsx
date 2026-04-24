@@ -1,5 +1,6 @@
+import { AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
 
 import { registerContactRouteNavigate } from '@/navigation/contactRouteBridge';
 
@@ -25,15 +26,22 @@ function ContactNavExpandSync() {
   return null;
 }
 
+function ContactPresenceLayer() {
+  const { pathname } = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {pathname === '/contact' && <ContactPage key="inkblot-contact" />}
+    </AnimatePresence>
+  );
+}
+
 export function App() {
   return (
     <BrowserRouter>
       <ContactRouteRegister />
       <ContactNavExpandSync />
       <WebGLHost />
-      <Routes>
-        <Route path="/contact" element={<ContactPage />} />
-      </Routes>
+      <ContactPresenceLayer />
     </BrowserRouter>
   );
 }

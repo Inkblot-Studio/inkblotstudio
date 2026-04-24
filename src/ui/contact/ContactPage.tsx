@@ -1,8 +1,9 @@
-import { motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { closeContactAndRestore, restoreScrollAfterContact } from '@/navigation/contactRouteBridge';
-import { ContactPageBlooms } from '@/ui/contact/ContactPageBlooms';
+import { contactPageInner, contactPageMist, contactPageSky } from '@/ui/contact/contactPageMotion';
+import { useInterfaceAudio } from '@/ui/useInterfaceAudio';
 import { submitContact, resolveWeb3AccessKey } from '@/utils/contactFormSubmit';
 import {
   contactFieldId,
@@ -12,9 +13,12 @@ import {
 
 import './ContactPage.css';
 
-const HERO_WORDS = ['Say', 'hello'];
 const MAIL = 'ai.support@inkblotstudio.eu';
 const MAIL_GENERAL_HREF = `mailto:${MAIL}?subject=${encodeURIComponent('General — Inkblot Studio')}`;
+const PHONE_TEL = '+359882797806';
+const PHONE_HREF = `tel:${PHONE_TEL}`;
+const PHONE_LABEL = '+359 882 797 806';
+const STUDIO_LOCATION = 'Sofia, Bulgaria';
 
 function IntentArrow() {
   return (
@@ -24,13 +28,86 @@ function IntentArrow() {
   );
 }
 
+const EASE = [0.25, 0.48, 0.35, 0.99] as const;
+
+const swapTransition = (reduce: boolean) =>
+  reduce
+    ? { duration: 0.15 }
+    : { duration: 0.4, ease: EASE as [number, number, number, number] };
+
+function generalLineVariants(reduce: boolean) {
+  if (reduce) {
+    return { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.12 } } };
+  }
+  return {
+    hidden: { opacity: 0, y: 9 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.38, ease: EASE as [number, number, number, number] },
+    },
+  };
+}
+
+function generalPanelVariants(reduce: boolean) {
+  if (reduce) {
+    return {
+      hidden: { opacity: 0 },
+      show: { opacity: 1, transition: { duration: 0.15 } },
+      exit: { opacity: 0, transition: { duration: 0.12 } },
+    };
+  }
+  return {
+    hidden: { opacity: 0, y: 12 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        ease: EASE as [number, number, number, number],
+        when: 'beforeChildren' as const,
+        staggerChildren: 0.09,
+        delayChildren: 0.05,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -8,
+      transition: { duration: 0.28, ease: EASE as [number, number, number, number] },
+    },
+  };
+}
+
+function generalEmailHeroVariants(reduce: boolean) {
+  if (reduce) {
+    return { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.12 } } };
+  }
+  return {
+    hidden: {},
+    show: {
+      transition: {
+        when: 'beforeChildren' as const,
+        staggerChildren: 0.1,
+        delayChildren: 0.02,
+      },
+    },
+  };
+}
+
 export function ContactPage() {
   const reduce = useReducedMotion();
+  const { playHover, playClick } = useInterfaceAudio();
   const formRef = useRef<HTMLFormElement>(null);
   const [intent, setIntent] = useState<'work' | 'general'>('work');
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const gLine = generalLineVariants(!!reduce);
+  const gPanel = generalPanelVariants(!!reduce);
+  const gEmailHero = generalEmailHeroVariants(!!reduce);
+  const skyV = contactPageSky(!!reduce);
+  const mistV = contactPageMist(!!reduce);
+  const innerV = contactPageInner(!!reduce);
 
   useLayoutEffect(() => {
     document.body.classList.add('contact-page-open');
@@ -86,10 +163,6 @@ export function ContactPage() {
     clearFieldInvalid();
   }, [intent, clearFieldInvalid]);
 
-  const onClose = () => {
-    closeContactAndRestore();
-  };
-
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = formRef.current;
@@ -130,7 +203,7 @@ export function ContactPage() {
       setSuccess(true);
       window.setTimeout(() => {
         closeContactAndRestore();
-      }, 2600);
+      }, 3000);
     } else {
       setError(result.message);
     }
@@ -147,177 +220,236 @@ export function ContactPage() {
   };
 
   return (
-    <main
-      className={`contact-page contact-page--enter${sending ? ' contact-page--sending' : ''}${
-        success ? ' contact-page--success' : ''
-      }`}
-      role="main"
-      aria-label="Contact Inkblot Studio"
-      id="contact-page-root"
-    >
-      <button type="button" className="contact-page__close" onClick={onClose} aria-label="Close and return">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M6 6l12 12M18 6L6 18"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
-      <ContactPageBlooms />
-      <div className="contact-page__inner">
-        <div className="contact-page__grid">
-          <div className="contact-page__col contact-page__col--copy">
+    <div className="contact-page-3d-root">
+      <motion.main
+        className={`contact-page contact-page--sky${sending ? ' contact-page--sending' : ''}${
+          success ? ' contact-page--success' : ''
+        }`}
+        role="main"
+        aria-label="Contact Inkblot Studio"
+        id="contact-page-root"
+        variants={skyV}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+      >
+        <motion.div
+          className="contact-page__mist"
+          aria-hidden="true"
+          variants={mistV}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+        />
+        <motion.div
+          className="contact-page__inner"
+          variants={innerV}
+          initial="initial"
+          animate="animate"
+        >
+        <div className="contact-page__center">
+          <div className="contact-page__intro">
             <h1
               className="contact-page__hero contact-page__hero--ref"
               id="contact-page-heading"
             >
-              {HERO_WORDS.map((w, i) => (
-                <motion.span
-                  key={w}
-                  className="contact-page__hero-line"
-                  style={{ display: 'inline-block', marginRight: '0.28em' }}
-                  initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 + i * 0.08, duration: 0.45, ease: [0.25, 0.48, 0.35, 0.99] }}
-                  whileHover={
-                    reduce
-                      ? undefined
-                      : {
-                          y: -3,
-                          transition: { duration: 0.22, ease: [0.25, 0.48, 0.35, 0.99] },
-                        }
-                  }
-                >
-                  {w}
-                </motion.span>
-              ))}
+              <span className="contact-page__hero-line">Say</span>
+              <span className="contact-page__hero-line">hello</span>
             </h1>
-            <p className="contact-page__kicker">We look forward to hearing from you</p>
-          </div>
-
-          <div className="contact-page__col contact-page__col--action">
-            <span className="contact-page__marker" aria-hidden="true" />
-            <div className="contact-page__intents" role="group" aria-label="How would you like to reach us?">
+            <p className="contact-page__kicker contact-page__kicker--sheet">
+              We look forward to hearing from you
+            </p>
+            <div
+              className="contact-page__intents"
+              role="group"
+              aria-label="How would you like to reach us?"
+            >
               <button
                 type="button"
                 className="contact-page__intent"
                 aria-pressed={intent === 'work'}
-                onClick={() => setIntent('work')}
+                onClick={() => {
+                  playClick();
+                  setIntent('work');
+                }}
+                onPointerEnter={playHover}
               >
-                New work <IntentArrow />
+                New business <IntentArrow />
               </button>
               <button
                 type="button"
                 className="contact-page__intent"
                 aria-pressed={intent === 'general'}
-                onClick={() => setIntent('general')}
+                onClick={() => {
+                  playClick();
+                  setIntent('general');
+                }}
+                onPointerEnter={playHover}
               >
                 General <IntentArrow />
               </button>
             </div>
-
-            {intent === 'work' ? (
-              <div className="contact-page__views">
-                <form
-                  ref={formRef}
-                  id="contact-page-form"
-                  className="contact-page__form"
-                  noValidate
-                  onSubmit={onSubmit}
-                  onInput={onInput}
-                  data-access-key="REPLACE_ACCESS_KEY"
-                >
-                  <input
-                    type="text"
-                    name="botcheck"
-                    className="contact-page__hp"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    aria-hidden="true"
-                  />
-                  <div>
-                    <label className="contact-page__label" htmlFor="contact-name">
-                      Name
-                    </label>
-                    <input
-                      className="contact-page__input"
-                      type="text"
-                      id="contact-name"
-                      name="name"
-                      required
-                      minLength={2}
-                      maxLength={120}
-                      autoComplete="name"
-                      placeholder="Your name"
-                    />
-                  </div>
-                  <div>
-                    <label className="contact-page__label" htmlFor="contact-email">
-                      Email
-                    </label>
-                    <input
-                      className="contact-page__input"
-                      type="email"
-                      id="contact-email"
-                      name="email"
-                      required
-                      maxLength={254}
-                      inputMode="email"
-                      autoComplete="email"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="contact-page__label" htmlFor="contact-message">
-                      Message
-                    </label>
-                    <textarea
-                      className="contact-page__textarea"
-                      id="contact-message"
-                      name="message"
-                      required
-                      minLength={10}
-                      maxLength={8000}
-                      rows={4}
-                      placeholder="Tell us about the project, timeline, and goals."
-                    />
-                  </div>
-                  {error ? (
-                    <p className="contact-page__error" id="contact-page-error" role="alert">
-                      {error}
-                    </p>
-                  ) : null}
-                  <button type="submit" className="contact-page__submit" disabled={sending || success}>
-                    <span className="contact-page__send-label">Send</span>
-                    <span className="contact-page__send-busy" aria-hidden>
-                      Sending
-                    </span>
-                  </button>
-                </form>
-
-                <div className="contact-page__success" aria-hidden={!success} tabIndex={-1}>
-                  <p className="contact-page__success-k">Done</p>
-                  <p className="contact-page__success-t">Thank you. We will get back to you soon.</p>
-                </div>
-              </div>
-            ) : (
-              <div className="contact-page__email-hero" aria-live="polite">
-                <a className="contact-page__email-link" href={MAIL_GENERAL_HREF}>
-                  {MAIL}
-                </a>
-                <p className="contact-page__email-lede">For day-to-day questions, partnerships, and everything that isn’t a new brief.</p>
-                <p className="contact-page__email-hint">
-                  <button type="button" className="contact-page__link-as-btn" onClick={() => setIntent('work')}>
-                    Have a new project? Use the form
-                  </button>
-                </p>
-              </div>
-            )}
           </div>
+
+            <div className="contact-page__swap-shell">
+              <AnimatePresence mode="wait" initial={false}>
+                {intent === 'work' ? (
+                  <motion.div
+                    key="work"
+                    className="contact-page__swap-panel contact-page__swap-panel--work"
+                    role="region"
+                    aria-label="New business form"
+                    initial={reduce ? false : { opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reduce ? undefined : { opacity: 0, y: -10 }}
+                    transition={swapTransition(!!reduce)}
+                  >
+                    <div className="contact-page__views">
+                      <form
+                        ref={formRef}
+                        id="contact-page-form"
+                        className="contact-page__form"
+                        noValidate
+                        onSubmit={onSubmit}
+                        onInput={onInput}
+                        data-access-key="REPLACE_ACCESS_KEY"
+                      >
+                        <input
+                          type="text"
+                          name="botcheck"
+                          className="contact-page__hp"
+                          tabIndex={-1}
+                          autoComplete="off"
+                          aria-hidden="true"
+                        />
+                        <div>
+                          <label className="contact-page__label" htmlFor="contact-name">
+                            Name
+                          </label>
+                          <input
+                            className="contact-page__input"
+                            type="text"
+                            id="contact-name"
+                            name="name"
+                            required
+                            minLength={2}
+                            maxLength={120}
+                            autoComplete="name"
+                            placeholder="Your name"
+                          />
+                        </div>
+                        <div>
+                          <label className="contact-page__label" htmlFor="contact-email">
+                            Email
+                          </label>
+                          <input
+                            className="contact-page__input"
+                            type="email"
+                            id="contact-email"
+                            name="email"
+                            required
+                            maxLength={254}
+                            inputMode="email"
+                            autoComplete="email"
+                            placeholder="you@example.com"
+                          />
+                        </div>
+                        <div>
+                          <label className="contact-page__label" htmlFor="contact-message">
+                            Message
+                          </label>
+                          <textarea
+                            className="contact-page__textarea"
+                            id="contact-message"
+                            name="message"
+                            required
+                            minLength={10}
+                            maxLength={8000}
+                            rows={4}
+                            placeholder="Tell us about the project, timeline, and goals."
+                          />
+                        </div>
+                        {error ? (
+                          <p className="contact-page__error" id="contact-page-error" role="alert">
+                            {error}
+                          </p>
+                        ) : null}
+                        <button
+                          type="submit"
+                          className="contact-page__submit"
+                          disabled={sending || success}
+                          onClick={() => playClick()}
+                          onPointerEnter={playHover}
+                        >
+                          <span className="contact-page__send-label">Send</span>
+                          <span className="contact-page__send-busy" aria-hidden>
+                            Sending
+                          </span>
+                        </button>
+                      </form>
+
+                      <div className="contact-page__success" aria-hidden={!success} tabIndex={-1}>
+                        <p className="contact-page__success-k">Done</p>
+                        <p className="contact-page__success-t">Thank you. We will get back to you soon.</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="general"
+                    className="contact-page__swap-panel contact-page__swap-panel--general"
+                    role="region"
+                    aria-label="Email and phone"
+                    aria-live="polite"
+                    variants={gPanel}
+                    initial="hidden"
+                    animate="show"
+                    exit="exit"
+                  >
+                    <motion.div className="contact-page__email-hero" variants={gEmailHero} initial="hidden" animate="show">
+                      <motion.a
+                        className="contact-page__email-link"
+                        href={MAIL_GENERAL_HREF}
+                        variants={gLine}
+                      >
+                        {MAIL}
+                      </motion.a>
+                      <motion.div className="contact-page__offices" role="list" variants={gLine}>
+                        <div className="contact-page__office" role="listitem">
+                          <p className="contact-page__office-label">Studio</p>
+                          <p className="contact-page__office-line">{STUDIO_LOCATION}</p>
+                        </div>
+                        <div className="contact-page__office" role="listitem">
+                          <p className="contact-page__office-label">Call</p>
+                          <a className="contact-page__office-line contact-page__office-line--link" href={PHONE_HREF}>
+                            {PHONE_LABEL}
+                          </a>
+                        </div>
+                      </motion.div>
+                      <motion.p className="contact-page__email-lede" variants={gLine}>
+                        For day-to-day questions, partnerships, and everything that isn’t a new brief.
+                      </motion.p>
+                      <motion.p className="contact-page__email-hint" variants={gLine}>
+                        <button
+                          type="button"
+                          className="contact-page__link-as-btn"
+                          onClick={() => {
+                            playClick();
+                            setIntent('work');
+                          }}
+                          onPointerEnter={playHover}
+                        >
+                          Have a new project? Use the form
+                        </button>
+                      </motion.p>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
         </div>
-      </div>
-    </main>
+      </motion.div>
+      </motion.main>
+    </div>
   );
 }

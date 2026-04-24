@@ -1,5 +1,6 @@
-import { openContactFromNav } from '@/navigation/contactRouteBridge';
+import { leaveContactToJourneySection, openContactFromNav } from '@/navigation/contactRouteBridge';
 import type { AudioSystem } from '@/systems/audioSystem';
+import { registerAudioForReactUI } from '@/ui/audioUIFeedbackRegistry';
 import type { ScrollSystem } from '@/systems/scrollSystem';
 import { initDrawerSlotTitles } from '@/ui/drawerSlotTitles';
 import { navScrollToJourneyIndex, navScrollToWork } from '@/ui/portfolioNavigator';
@@ -69,13 +70,11 @@ function updateMiniPlayerCredits(audio: AudioSystem): void {
   fillMarqueeRow(wrapTitle, titleView, titleTrack, line);
 }
 let petalPulseSmoothed = 0.26;
-/** Phase for a very slow, tiny wobble (no raw-audio noise on the ring). */
+/** Phase for slow idle wobble on the mini EQ. */
 let adVizSwirl = 0;
-/** One smoothed level from the analyser (broad strokes only). */
-let adLevel = 0;
-/** Double EMA 0..1: butter-smooth motion on the single pulse readout. */
-let adViz1 = 0.42;
-let adViz2 = 0.42;
+const AD_BANDS = 8;
+/** Smoothed 0..1 per-band levels (8-band spectrum in updateNavChrome). */
+let adBars: number[] = [0.35, 0.36, 0.37, 0.38, 0.35, 0.36, 0.34, 0.35];
 
 let drawerFocusReturn: HTMLElement | null = null;
 
@@ -195,8 +194,24 @@ function initSiteDrawer(): void {
     closeIfOpen();
   };
 
-  linkIndex?.addEventListener('click', (e) => onLinkNav(e, () => navScrollToJourneyIndex()));
-  linkWork?.addEventListener('click', (e) => onLinkNav(e, () => navScrollToWork()));
+  linkIndex?.addEventListener('click', (e) =>
+    onLinkNav(e, () => {
+      if (document.body.classList.contains('contact-page-open')) {
+        leaveContactToJourneySection('index');
+      } else {
+        navScrollToJourneyIndex();
+      }
+    }),
+  );
+  linkWork?.addEventListener('click', (e) =>
+    onLinkNav(e, () => {
+      if (document.body.classList.contains('contact-page-open')) {
+        leaveContactToJourneySection('work');
+      } else {
+        navScrollToWork();
+      }
+    }),
+  );
 
   document.getElementById('drawer-mailto')?.addEventListener('click', () => {
     closeIfOpen();
@@ -368,14 +383,26 @@ function initAudioDockControls(audio: AudioSystem): void {
 }
 
 export function initNavChrome(audio: AudioSystem): void {
-  document.getElementById('nav-link-index')?.addEventListener('click', (e) => {
+  registerAudioForReactUI(audio);
+  const onNavIndex = (e: Event) => {
     e.preventDefault();
-    navScrollToJourneyIndex();
-  });
-  document.getElementById('nav-link-work')?.addEventListener('click', (e) => {
+    if (document.body.classList.contains('contact-page-open')) {
+      leaveContactToJourneySection('index');
+    } else {
+      navScrollToJourneyIndex();
+    }
+  };
+  const onNavWork = (e: Event) => {
     e.preventDefault();
-    navScrollToWork();
-  });
+    if (document.body.classList.contains('contact-page-open')) {
+      leaveContactToJourneySection('work');
+    } else {
+      navScrollToWork();
+    }
+  };
+  document.getElementById('nav-brand-home')?.addEventListener('click', onNavIndex);
+  document.getElementById('nav-link-index')?.addEventListener('click', onNavIndex);
+  document.getElementById('nav-link-work')?.addEventListener('click', onNavWork);
   document.getElementById('nav-mini-prev')?.addEventListener('click', (e) => {
     e.preventDefault();
     audio.prevTrack();
@@ -468,34 +495,32 @@ export function updateNavChrome(
     const b = audio.beatEnvelope;
     const p = petalPulseSmoothed;
     const playing = audio.isPlaying;
-    // Single wideband level, heavily damped (frame-to-frame noise rejected)
-    const rawLevel = Math.min(1, 0.52 * lf + 0.28 * hf + 0.2 * b);
-    const aLevel = 1 - Math.exp(-2.4 * d);
-    adLevel += (rawLevel - adLevel) * aLevel;
-    if (!playing) {
-      adLevel += (0 - adLevel) * (1 - Math.exp(-1.4 * d));
-    }
     adVizSwirl = (adVizSwirl + d * 0.55) % 62.83;
-    const a1 = 1 - Math.exp(-3.2 * d);
-    const a2 = 1 - Math.exp(-2.0 * d);
-    let target: number;
-    if (playing) {
-      // Mostly the already-smooth petal term; adLevel gives long-weighted “loud” motion
-      target = 0.08 + 0.9 * (0.52 * p + 0.48 * adLevel);
-    } else {
-      target = 0.2 + 0.14 * Math.sin(adVizSwirl * 0.35);
+    const t = adVizSwirl;
+    const aBar = 1 - Math.exp(-2.6 * d);
+    const s8 = audio.spectrum8;
+    for (let i = 0; i < AD_BANDS; i++) {
+      let u: number;
+      if (playing) {
+        const raw = s8[i] ?? 0;
+        u =
+          0.08 +
+          0.9 *
+            Math.min(
+              1,
+              raw * (0.92 + 0.08 * (i + 1) * 0.12) +
+                (i < 2 ? 0.12 * lf : 0) +
+                (i >= 2 && i <= 4 ? 0.1 * p : 0) +
+                (i > 4 ? 0.1 * hf : 0) +
+                (i >= 5 ? 0.08 * b : 0),
+            );
+      } else {
+        u = 0.2 + 0.15 * Math.sin(t * 0.42 + i * 0.45 + (i & 1) * 0.2);
+      }
+      u = Math.min(0.99, Math.max(0.08, u));
+      adBars[i] += (u - adBars[i]!) * aBar;
+      audioToggle.style.setProperty(`--ad-b${i}`, adBars[i]!.toFixed(3));
     }
-    target = Math.min(0.98, Math.max(0.06, target));
-    if (playing) {
-      const micro = 1 + 0.04 * Math.sin(adVizSwirl * 0.14);
-      target = Math.min(0.99, Math.max(0.07, target * micro));
-    }
-    adViz1 += (target - adViz1) * a1;
-    adViz2 += (adViz1 - adViz2) * a2;
-    const pulse = Math.min(0.99, Math.max(0.07, adViz2));
-    const rot = playing ? Math.sin(adVizSwirl * 0.1) * 5.5 : Math.sin(adVizSwirl * 0.25) * 4;
-    audioToggle.style.setProperty('--ad-pulse', pulse.toFixed(3));
-    audioToggle.style.setProperty('--ad-rot', rot.toFixed(2));
   }
 
   updateMiniPlayerCredits(audio);

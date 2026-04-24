@@ -1,12 +1,14 @@
 import type { NavigateFunction } from 'react-router-dom';
 
-import { navScrollToJourneyIndex } from '@/ui/portfolioNavigator';
+import { navScrollToJourneyIndex, navScrollToWork } from '@/ui/portfolioNavigator';
 
 let boundNavigate: NavigateFunction | null = null;
 /** Y position (px) in the main document to restore when leaving /contact, if opened from the journey. */
 let savedJourneyScrollY: number | null = null;
 /** True when the user used in-site nav to /contact (not a direct /contact visit). */
 let openedWithScrollCapture = false;
+/** When set, `restoreScrollAfterContact` scrolls to this section instead of restoring Y. */
+let pendingJourneyAfterClose: 'index' | 'work' | null = null;
 
 const prefersReducedScrollMotion = (): boolean => {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
@@ -77,6 +79,20 @@ export function openContactFromNav(): void {
  * When ContactPage unmounts, restore journey scroll or a sensible default.
  */
 export function restoreScrollAfterContact(): void {
+  if (pendingJourneyAfterClose === 'index') {
+    pendingJourneyAfterClose = null;
+    openedWithScrollCapture = false;
+    savedJourneyScrollY = null;
+    requestAnimationFrame(() => navScrollToJourneyIndex());
+    return;
+  }
+  if (pendingJourneyAfterClose === 'work') {
+    pendingJourneyAfterClose = null;
+    openedWithScrollCapture = false;
+    savedJourneyScrollY = null;
+    requestAnimationFrame(() => navScrollToWork());
+    return;
+  }
   if (openedWithScrollCapture && savedJourneyScrollY != null) {
     const y = Math.max(0, savedJourneyScrollY);
     openedWithScrollCapture = false;
@@ -91,6 +107,20 @@ export function restoreScrollAfterContact(): void {
   requestAnimationFrame(() => {
     navScrollToJourneyIndex();
   });
+}
+
+/**
+ * Leave `/contact` and land on the journey (replaces history). Used from top nav when the contact sheet is open.
+ */
+export function leaveContactToJourneySection(section: 'index' | 'work'): void {
+  if (!boundNavigate) {
+    window.location.assign('/');
+    return;
+  }
+  pendingJourneyAfterClose = section;
+  openedWithScrollCapture = false;
+  savedJourneyScrollY = null;
+  boundNavigate('/', { replace: true });
 }
 
 /**

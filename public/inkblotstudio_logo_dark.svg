@@ -1,0 +1,11 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <polygon id="tri" points="0,0 80,40 0,80"/>
+  </defs>
+  <g fill="#0b1220" transform="translate(60,60) scale(0.4) translate(-60,-130)">
+    <use href="#tri" x="20" y="0"/>
+    <use href="#tri" x="20" y="60" transform="scale(-1,1) translate(-120,0)"/>
+    <use href="#tri" x="20" y="120"/>
+    <use href="#tri" x="20" y="180" transform="scale(-1,1) translate(-120,0)"/>
+  </g>
+</svg>

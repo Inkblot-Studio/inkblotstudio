@@ -39,6 +39,7 @@ import {
   type StudioEnvironmentHandle,
 } from '@/core/studioEnvironment';
 import { initCookieConsent } from '@/ui/cookieConsent';
+import { registerAudioForReactUI } from '@/ui/audioUIFeedbackRegistry';
 import { initNavChrome, updateNavChrome } from '@/ui/navChrome';
 import { clearPortfolioScrollNavigator, registerPortfolioScrollNavigator } from '@/ui/portfolioNavigator';
 import {
@@ -631,6 +632,7 @@ export class Inkblot {
   }
 
   dispose(): void {
+    registerAudioForReactUI(null);
     this.renderer.instance.setAnimationLoop(null);
     window.removeEventListener('resize', this.onResize);
     if (this.useCitronBloom && this.bloomExperienceId === 'flower') {
