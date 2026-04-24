@@ -14,11 +14,20 @@ import './ContactPage.css';
 
 const HERO_WORDS = ['Say', 'hello'];
 const MAIL = 'ai.support@inkblotstudio.eu';
+const MAIL_GENERAL_HREF = `mailto:${MAIL}?subject=${encodeURIComponent('General — Inkblot Studio')}`;
+
+function IntentArrow() {
+  return (
+    <span className="contact-page__intent-arrow" aria-hidden="true">
+      ↘
+    </span>
+  );
+}
 
 export function ContactPage() {
   const reduce = useReducedMotion();
   const formRef = useRef<HTMLFormElement>(null);
-  const [intent, setIntent] = useState<'work' | 'general'>('general');
+  const [intent, setIntent] = useState<'work' | 'general'>('work');
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +81,11 @@ export function ContactPage() {
     el.setAttribute('aria-describedby', 'contact-page-error');
   }, []);
 
+  useEffect(() => {
+    setError(null);
+    clearFieldInvalid();
+  }, [intent, clearFieldInvalid]);
+
   const onClose = () => {
     closeContactAndRestore();
   };
@@ -101,10 +115,7 @@ export function ContactPage() {
     }
 
     const accessKey = resolveWeb3AccessKey(form);
-    const subject =
-      intent === 'work'
-        ? 'Inkblot Studio — New work / project'
-        : 'Inkblot Studio — General contact';
+    const subject = 'Inkblot Studio — New work / project';
 
     setSending(true);
     const result = await submitContact(accessKey, {
@@ -156,135 +167,154 @@ export function ContactPage() {
       </button>
       <ContactPageBlooms />
       <div className="contact-page__inner">
-        <h1 className="contact-page__hero" id="contact-page-heading">
-          {HERO_WORDS.map((w, i) => (
-            <motion.span
-              key={w}
-              className="contact-page__hero-line"
-              style={{ display: 'inline-block', marginRight: '0.28em' }}
-              initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 + i * 0.08, duration: 0.45, ease: [0.25, 0.48, 0.35, 0.99] }}
-              whileHover={
-                reduce
-                  ? undefined
-                  : {
-                      y: -3,
-                      transition: { duration: 0.22, ease: [0.25, 0.48, 0.35, 0.99] },
-                    }
-              }
+        <div className="contact-page__grid">
+          <div className="contact-page__col contact-page__col--copy">
+            <h1
+              className="contact-page__hero contact-page__hero--ref"
+              id="contact-page-heading"
             >
-              {w}
-            </motion.span>
-          ))}
-        </h1>
+              {HERO_WORDS.map((w, i) => (
+                <motion.span
+                  key={w}
+                  className="contact-page__hero-line"
+                  style={{ display: 'inline-block', marginRight: '0.28em' }}
+                  initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 + i * 0.08, duration: 0.45, ease: [0.25, 0.48, 0.35, 0.99] }}
+                  whileHover={
+                    reduce
+                      ? undefined
+                      : {
+                          y: -3,
+                          transition: { duration: 0.22, ease: [0.25, 0.48, 0.35, 0.99] },
+                        }
+                  }
+                >
+                  {w}
+                </motion.span>
+              ))}
+            </h1>
+            <p className="contact-page__kicker">We look forward to hearing from you</p>
+          </div>
 
-        <p className="contact-page__kicker">We look forward to hearing from you</p>
-
-        <p className="contact-page__mail">
-          <a href={`mailto:${MAIL}`}>{MAIL}</a>
-        </p>
-
-        <div className="contact-page__intents" role="group" aria-label="What is this about?">
-          <button
-            type="button"
-            className="contact-page__intent"
-            aria-pressed={intent === 'work'}
-            onClick={() => setIntent('work')}
-          >
-            New work
-          </button>
-          <button
-            type="button"
-            className="contact-page__intent"
-            aria-pressed={intent === 'general'}
-            onClick={() => setIntent('general')}
-          >
-            General
-          </button>
-        </div>
-
-        <div className="contact-page__views">
-          <form
-            ref={formRef}
-            id="contact-page-form"
-            className="contact-page__form"
-            noValidate
-            onSubmit={onSubmit}
-            onInput={onInput}
-            data-access-key="REPLACE_ACCESS_KEY"
-          >
-            <input
-              type="text"
-              name="botcheck"
-              className="contact-page__hp"
-              tabIndex={-1}
-              autoComplete="off"
-              aria-hidden="true"
-            />
-            <div>
-              <label className="contact-page__label" htmlFor="contact-name">
-                Name
-              </label>
-              <input
-                className="contact-page__input"
-                type="text"
-                id="contact-name"
-                name="name"
-                required
-                minLength={2}
-                maxLength={120}
-                autoComplete="name"
-                placeholder="Your name"
-              />
+          <div className="contact-page__col contact-page__col--action">
+            <span className="contact-page__marker" aria-hidden="true" />
+            <div className="contact-page__intents" role="group" aria-label="How would you like to reach us?">
+              <button
+                type="button"
+                className="contact-page__intent"
+                aria-pressed={intent === 'work'}
+                onClick={() => setIntent('work')}
+              >
+                New work <IntentArrow />
+              </button>
+              <button
+                type="button"
+                className="contact-page__intent"
+                aria-pressed={intent === 'general'}
+                onClick={() => setIntent('general')}
+              >
+                General <IntentArrow />
+              </button>
             </div>
-            <div>
-              <label className="contact-page__label" htmlFor="contact-email">
-                Email
-              </label>
-              <input
-                className="contact-page__input"
-                type="email"
-                id="contact-email"
-                name="email"
-                required
-                maxLength={254}
-                inputMode="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label className="contact-page__label" htmlFor="contact-message">
-                Message
-              </label>
-              <textarea
-                className="contact-page__textarea"
-                id="contact-message"
-                name="message"
-                required
-                minLength={10}
-                maxLength={8000}
-                rows={4}
-                placeholder="What would you like to discuss?"
-              />
-            </div>
-            {error ? (
-              <p className="contact-page__error" id="contact-page-error" role="alert">
-                {error}
-              </p>
-            ) : null}
-            <button type="submit" className="contact-page__submit" disabled={sending || success}>
-              <span className="contact-page__send-label">Send</span>
-              <span className="contact-page__send-busy" aria-hidden>
-                Sending
-              </span>
-            </button>
-          </form>
 
-          <div className="contact-page__success" aria-hidden={!success} tabIndex={-1}>
-            <p className="contact-page__success-k">Done</p>
-            <p className="contact-page__success-t">Thank you. We will get back to you soon.</p>
+            {intent === 'work' ? (
+              <div className="contact-page__views">
+                <form
+                  ref={formRef}
+                  id="contact-page-form"
+                  className="contact-page__form"
+                  noValidate
+                  onSubmit={onSubmit}
+                  onInput={onInput}
+                  data-access-key="REPLACE_ACCESS_KEY"
+                >
+                  <input
+                    type="text"
+                    name="botcheck"
+                    className="contact-page__hp"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <label className="contact-page__label" htmlFor="contact-name">
+                      Name
+                    </label>
+                    <input
+                      className="contact-page__input"
+                      type="text"
+                      id="contact-name"
+                      name="name"
+                      required
+                      minLength={2}
+                      maxLength={120}
+                      autoComplete="name"
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div>
+                    <label className="contact-page__label" htmlFor="contact-email">
+                      Email
+                    </label>
+                    <input
+                      className="contact-page__input"
+                      type="email"
+                      id="contact-email"
+                      name="email"
+                      required
+                      maxLength={254}
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="contact-page__label" htmlFor="contact-message">
+                      Message
+                    </label>
+                    <textarea
+                      className="contact-page__textarea"
+                      id="contact-message"
+                      name="message"
+                      required
+                      minLength={10}
+                      maxLength={8000}
+                      rows={4}
+                      placeholder="Tell us about the project, timeline, and goals."
+                    />
+                  </div>
+                  {error ? (
+                    <p className="contact-page__error" id="contact-page-error" role="alert">
+                      {error}
+                    </p>
+                  ) : null}
+                  <button type="submit" className="contact-page__submit" disabled={sending || success}>
+                    <span className="contact-page__send-label">Send</span>
+                    <span className="contact-page__send-busy" aria-hidden>
+                      Sending
+                    </span>
+                  </button>
+                </form>
+
+                <div className="contact-page__success" aria-hidden={!success} tabIndex={-1}>
+                  <p className="contact-page__success-k">Done</p>
+                  <p className="contact-page__success-t">Thank you. We will get back to you soon.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="contact-page__email-hero" aria-live="polite">
+                <a className="contact-page__email-link" href={MAIL_GENERAL_HREF}>
+                  {MAIL}
+                </a>
+                <p className="contact-page__email-lede">For day-to-day questions, partnerships, and everything that isn’t a new brief.</p>
+                <p className="contact-page__email-hint">
+                  <button type="button" className="contact-page__link-as-btn" onClick={() => setIntent('work')}>
+                    Have a new project? Use the form
+                  </button>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
