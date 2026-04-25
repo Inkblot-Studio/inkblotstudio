@@ -886,6 +886,8 @@ body.inkblot-light-chrome .nav-menu-btn:focus-visible {
 body.contact-page-open .audio-dock,
 body.inkblot-light-chrome .audio-dock {
   --ad-ink: #e8e4de;
+  --ad-liquid-fill: color-mix(in srgb, var(--contact-chrome-surface) 92%, #3a342e 8%);
+  --ad-liquid-fill-hover: color-mix(in srgb, #2a2420 8%, #0c0a08 92%);
 }
 
 body.contact-page-open .audio-dock__shell,
@@ -922,11 +924,11 @@ body.inkblot-light-chrome .audio-dock__eq-btn:focus-visible {
   outline-offset: 2px;
 }
 
-body.contact-page-open .audio-dock--liquid .nav-player-wrap:hover,
-body.contact-page-open .audio-dock--liquid .nav-player-wrap:focus-within,
-body.inkblot-light-chrome .audio-dock--liquid .nav-player-wrap:hover,
-body.inkblot-light-chrome .audio-dock--liquid .nav-player-wrap:focus-within {
-  background: color-mix(in srgb, #2a2420 8%, #0c0a08 92%);
+body.contact-page-open .audio-dock--liquid .nav-player-wrap:hover::before,
+body.contact-page-open .audio-dock--liquid .nav-player-wrap:focus-within::before,
+body.inkblot-light-chrome .audio-dock--liquid .nav-player-wrap:hover::before,
+body.inkblot-light-chrome .audio-dock--liquid .nav-player-wrap:focus-within::before {
+  background: var(--ad-liquid-fill-hover);
 }
 
 body.contact-page-open .nav-mini-mq-seg,
@@ -953,57 +955,14 @@ body.inkblot-light-chrome .audio-dock__signal {
   color: #e6dfd6;
 }
 
-body.contact-page-open .audio-dock__signal__halo,
-body.inkblot-light-chrome .audio-dock__signal__halo {
-  background: radial-gradient(
-    circle at 50% 50%,
-    color-mix(in srgb, #e8e0d4 20%, transparent) 0%,
-    color-mix(in srgb, #b8a99a 6%, transparent) 50%,
-    transparent 70%
-  );
-}
-
-body.contact-page-open .audio-dock__signal__ring,
-body.inkblot-light-chrome .audio-dock__signal__ring {
-  border-color: rgba(240, 234, 226, 0.28);
-}
-
-body.contact-page-open .audio-dock__signal__dot,
-body.inkblot-light-chrome .audio-dock__signal__dot {
-  background: #f0ebe4;
-  box-shadow:
-    0 0 0 0.4px rgba(12, 10, 8, 0.25) inset,
-    0 0 calc(2px + 6px * var(--audio-signal, 0.34)) color-mix(in srgb, #f0ebe4 20%, transparent);
-}
-
-body.contact-page-open.audio-active .audio-dock__signal__halo,
-body.contact-page-open.music-playing .audio-dock__signal__halo,
-body.inkblot-light-chrome.audio-active .audio-dock__signal__halo,
-body.inkblot-light-chrome.music-playing .audio-dock__signal__halo {
-  background: radial-gradient(
-    circle at 50% 50%,
-    color-mix(in srgb, #f2ebe3 24%, transparent) 0%,
-    color-mix(in srgb, #9a8a7a 9%, transparent) 55%,
-    transparent 72%
-  );
-}
-
-body.contact-page-open.music-playing .audio-dock__signal__dot,
-body.inkblot-light-chrome.music-playing .audio-dock__signal__dot {
-  background: #fffaf4;
-  box-shadow:
-    0 0 0 0.35px rgba(20, 18, 16, 0.28) inset,
-    0 0 calc(3px + 7px * var(--audio-signal, 0.34)) color-mix(in srgb, #e8e0d4 32%, transparent);
+body.contact-page-open .audio-dock__eq-bar,
+body.inkblot-light-chrome .audio-dock__eq-bar {
+  opacity: calc(0.72 + 0.28 * var(--audio-wave-morph, 0));
 }
 
 body.contact-page-open.journey-flower-active .audio-dock__signal,
 body.inkblot-light-chrome.journey-flower-active .audio-dock__signal {
   color: color-mix(in srgb, #ece6de 78%, var(--journey-rail) 22%);
-}
-
-body.contact-page-open.journey-flower-active .audio-dock__signal__ring,
-body.inkblot-light-chrome.journey-flower-active .audio-dock__signal__ring {
-  border-color: color-mix(in srgb, var(--journey-rail) 40%, rgba(240, 234, 226, 0.2));
 }
 
 body.contact-page-open #canvas-container,

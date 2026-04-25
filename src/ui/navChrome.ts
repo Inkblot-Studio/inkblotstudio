@@ -70,13 +70,130 @@ function updateMiniPlayerCredits(audio: AudioSystem): void {
 
   fillMarqueeRow(wrapTitle, titleView, titleTrack, line);
 }
-let petalPulseSmoothed = 0.26;
-/** Phase for idle breathing on the audio “signal” glyph. */
-let adVizSwirl = 0;
-/** Core level 0..1 — drives dot + halo (not bar EQ). */
-let signalSmoothed = 0.34;
-/** Lagging level for the ring (follows core for a softer echo). */
-let signalRingSmoothed = 0.32;
+
+/** Phase for idle EQ motion (rad / frame). */
+let audioWavePhase = 0;
+/** 0 = paused look, 1 = full live spectrum blend — eases play/pause. */
+let audioPlaybackMorph = 0;
+
+/** 128×128 viewBox, drawn ~30px in CSS. */
+const WAVE_UNIT = 128;
+
+/** Equalizer bars only — paused = equal heights, playing = spectrum; stagger + ease on morph. */
+const EQ_COUNT = 3;
+/** Baseline y — placed so the bar stack sits nearer vertical center of the 128 viewBox in the round button. */
+const EQ_BOTTOM = 88;
+const EQ_BAR_W = 13;
+const EQ_GAP = 9;
+const EQ_RX = 5.5;
+const EQ_H_MIN = 24;
+const EQ_H_MAX = 78;
+const EQ_CLUSTER_W = EQ_COUNT * EQ_BAR_W + (EQ_COUNT - 1) * EQ_GAP;
+const EQ_X0 = (WAVE_UNIT - EQ_CLUSTER_W) * 0.5;
+/** Per-bar delay factor for play/pause transition (0 = simultaneous). */
+const EQ_STAGGER = 0.07;
+
+/** Smoothed bar heights in [0, 1] for stable, readable motion. */
+let eqBarNorm: number[] = [0.38, 0.38, 0.38];
+
+function easeOutCubic(t: number): number {
+  const u = 1 - Math.max(0, Math.min(1, t));
+  return 1 - u * u * u;
+}
+
+function spectrumSliceAvg(spectrum: readonly number[], from: number, to: number): number {
+  let sum = 0;
+  let n = 0;
+  for (let j = from; j <= to; j++) {
+    sum += spectrum[j] ?? 0;
+    n++;
+  }
+  return n > 0 ? sum / n : 0;
+}
+
+/** Three bands across eight bins: lows, mids, highs. */
+function barLiveRaw(morphedS8: readonly number[], i: number): number {
+  if (i === 0) return spectrumSliceAvg(morphedS8, 0, 2);
+  if (i === 1) return spectrumSliceAvg(morphedS8, 3, 4);
+  return spectrumSliceAvg(morphedS8, 5, 7);
+}
+
+function staggeredMorph(playbackMorph: number, barIndex: number, reduceMotion: boolean): number {
+  if (reduceMotion) return playbackMorph;
+  const span = 1 - (EQ_COUNT - 1) * EQ_STAGGER;
+  if (span <= 1e-6) return playbackMorph;
+  return Math.min(1, Math.max(0, (playbackMorph - barIndex * EQ_STAGGER) / span));
+}
+
+function buildRoundedBarPath(x: number, bottomY: number, w: number, height: number, rx: number): string {
+  const h = Math.max(height, EQ_H_MIN * 0.65);
+  const top = bottomY - h;
+  const r = Math.min(rx, w * 0.48, h * 0.42);
+  const x1 = x + w;
+  return [
+    `M ${x.toFixed(2)} ${bottomY}`,
+    `L ${x.toFixed(2)} ${(top + r).toFixed(2)}`,
+    `Q ${x.toFixed(2)} ${top.toFixed(2)} ${(x + r).toFixed(2)} ${top.toFixed(2)}`,
+    `L ${(x1 - r).toFixed(2)} ${top.toFixed(2)}`,
+    `Q ${x1.toFixed(2)} ${top.toFixed(2)} ${x1.toFixed(2)} ${(top + r).toFixed(2)}`,
+    `L ${x1.toFixed(2)} ${bottomY}`,
+    'Z',
+  ].join(' ');
+}
+
+function eqBarTargetNorm(
+  i: number,
+  morphedS8: readonly number[],
+  playbackMorph: number,
+  phase: number,
+  reduceMotion: boolean,
+  isPlaying: boolean,
+): number {
+  const liveRaw = barLiveRaw(morphedS8, i);
+  const live = 0.18 + 0.82 * Math.pow(Math.min(1, liveRaw * 1.12), 0.58);
+
+  if (reduceMotion) {
+    const idle = isPlaying ? 0.38 : 0.38;
+    const blend = easeOutCubic(playbackMorph);
+    return idle * (1 - blend) + live * blend;
+  }
+
+  const idle = 0.38 + 0.02 * Math.sin(phase * 0.48 + i * 0.9);
+  const morphI = staggeredMorph(playbackMorph, i, false);
+  const blend = easeOutCubic(morphI);
+  return idle * (1 - blend) + live * blend;
+}
+
+function updateAudioEqBars(
+  delta: number,
+  morphedS8: readonly number[],
+  playbackMorph: number,
+  phase: number,
+  reduceMotion: boolean,
+  isPlaying: boolean,
+): void {
+  const smoothRate = reduceMotion ? 26 : 11;
+  const k = 1 - Math.exp(-delta * smoothRate);
+
+  for (let i = 0; i < EQ_COUNT; i++) {
+    const target = eqBarTargetNorm(i, morphedS8, playbackMorph, phase, reduceMotion, isPlaying);
+    eqBarNorm[i] += (target - eqBarNorm[i]) * k;
+    eqBarNorm[i] = Math.min(1, Math.max(0, eqBarNorm[i]));
+  }
+
+  const els = [
+    document.getElementById('nav-audio-eq-0'),
+    document.getElementById('nav-audio-eq-1'),
+    document.getElementById('nav-audio-eq-2'),
+  ];
+  for (let i = 0; i < EQ_COUNT; i++) {
+    const el = els[i];
+    if (!el) continue;
+    const x = EQ_X0 + i * (EQ_BAR_W + EQ_GAP);
+    const h = EQ_H_MIN + (EQ_H_MAX - EQ_H_MIN) * eqBarNorm[i]!;
+    el.setAttribute('d', buildRoundedBarPath(x, EQ_BOTTOM, EQ_BAR_W, h, EQ_RX));
+  }
+}
 
 let drawerFocusReturn: HTMLElement | null = null;
 
@@ -544,67 +661,27 @@ export function updateNavChrome(
 
   const audioToggle = document.getElementById('nav-audio-toggle');
   const d = Math.min(Math.max(delta, 0), 0.05);
+  const reduceMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (audioToggle) {
     audioToggle.setAttribute('aria-pressed', audio.isPlaying ? 'true' : 'false');
-    if (audio.isPlaying) {
-      const rawPetal = Math.min(
-        1,
-        0.18 +
-          audio.lowFrequencyVolume * 0.68 +
-          audio.beatEnvelope * 0.92 +
-          audio.highFrequencyVolume * 0.16,
-      );
-      petalPulseSmoothed += (rawPetal - petalPulseSmoothed) * Math.min(1, d * 14);
-    } else {
-      petalPulseSmoothed += (0.24 - petalPulseSmoothed) * Math.min(1, d * 8);
-    }
-    audioToggle.style.setProperty('--nav-petal-pulse', petalPulseSmoothed.toFixed(3));
-    const lf = audio.lowFrequencyVolume;
-    const hf = audio.highFrequencyVolume;
-    const b = audio.beatEnvelope;
-    const playing = audio.isPlaying;
-    adVizSwirl = (adVizSwirl + d * 0.8) % 62.83;
-    const t = adVizSwirl;
-    const aSig = 1 - Math.exp(-5.8 * d);
-    const aRing = 1 - Math.exp(-3.2 * d);
+    const morphTarget = audio.isPlaying ? 1 : 0;
+    const morphTau = reduceMotion ? 0.12 : 0.38;
+    const morphK = 1 - Math.exp(-d / morphTau);
+    audioPlaybackMorph += (morphTarget - audioPlaybackMorph) * morphK;
+    if (audioPlaybackMorph < 1e-4) audioPlaybackMorph = 0;
+    if (audioPlaybackMorph > 1 - 1e-4) audioPlaybackMorph = 1;
+
+    document.documentElement.style.setProperty('--audio-wave-morph', audioPlaybackMorph.toFixed(4));
+
+    const spd = reduceMotion ? 0.22 : 1;
+    const phaseMul = (0.55 + 2.2 * audioPlaybackMorph) * spd;
+    audioWavePhase += d * phaseMul;
+    if (audioWavePhase > Math.PI * 200) audioWavePhase -= Math.PI * 200;
     const s8 = audio.spectrum8;
-    let specSum = 0;
-    let specPeak = 0;
-    for (let i = 0; i < 8; i++) {
-      const v = s8[i] ?? 0;
-      specSum += v;
-      if (v > specPeak) specPeak = v;
-    }
-    const specAvg = specSum / 8;
-    let target: number;
-    if (playing) {
-      const shimmer = 0.045 * Math.sin(t * 1.15) + 0.025 * Math.sin(t * 2.1 + 0.4);
-      target = Math.min(
-        0.99,
-        Math.max(
-          0.1,
-          0.1 +
-            0.3 * lf +
-            0.16 * hf +
-            0.24 * b +
-            0.24 * specAvg +
-            0.2 * specPeak +
-            shimmer,
-        ),
-      );
-    } else {
-      target =
-        0.14 + 0.2 * Math.sin(t * 0.55) + 0.1 * Math.sin(t * 0.88 + 0.5) + 0.04 * Math.sin(t * 1.6);
-    }
-    target = Math.min(0.99, Math.max(0.08, target));
-    signalSmoothed += (target - signalSmoothed) * aSig;
-    const ringTarget = Math.min(
-      0.99,
-      Math.max(0.1, 0.78 * signalSmoothed + 0.2 * b + 0.16 * specPeak + 0.04 * Math.sin(t * 0.9)),
-    );
-    signalRingSmoothed += (ringTarget - signalRingSmoothed) * aRing;
-    audioToggle.style.setProperty('--audio-signal', signalSmoothed.toFixed(3));
-    audioToggle.style.setProperty('--audio-signal-ring', signalRingSmoothed.toFixed(3));
+    const spectrumMul = reduceMotion ? (audio.isPlaying ? 1 : 0) : audioPlaybackMorph;
+    const morphedS8 = s8.map((v) => v * spectrumMul);
+    updateAudioEqBars(d, morphedS8, audioPlaybackMorph, audioWavePhase, reduceMotion, audio.isPlaying);
   }
 
   updateMiniPlayerCredits(audio);

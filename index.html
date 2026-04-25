@@ -608,6 +608,9 @@
         --ad-grid-ease: cubic-bezier(0.32, 0.06, 0.18, 1);
         --ad-grid-dur: 0.52s;
         --ad-ink: #1a1812;
+        --ad-liquid-w: 11.75rem;
+        --ad-liquid-fill: color-mix(in srgb, #faf6f0 94%, #e8e2da);
+        --ad-liquid-fill-hover: color-mix(in srgb, #faf6f0 88%, #e8e2da);
         position: fixed;
         z-index: 19;
         left: max(1.05rem, env(safe-area-inset-left, 0px));
@@ -633,7 +636,8 @@
       .audio-dock__cluster {
         display: grid;
         align-items: stretch;
-        grid-template-columns: auto minmax(0, 0fr);
+        /* Length–length interpolation avoids `fr` glitches (brief width pop) on close. */
+        grid-template-columns: auto 0rem;
         justify-content: start;
         min-width: 0;
         width: max-content;
@@ -645,7 +649,7 @@
       }
 
       .audio-dock--liquid .audio-dock__cluster {
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: auto var(--ad-liquid-w);
       }
 
       .audio-dock__eq-btn {
@@ -695,7 +699,7 @@
         transform-style: preserve-3d;
       }
 
-      /* Black “ink” on white: halo, ring, dot (audio-reactive) — --audio-signal, --audio-signal-ring */
+      /* Audio glyph: centered EQ only — calm equal bars when paused, spectrum when playing. */
       .audio-dock__signal {
         position: relative;
         display: flex;
@@ -709,106 +713,49 @@
         isolation: isolate;
       }
 
-      .audio-dock__signal__halo {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 30px;
-        height: 30px;
-        margin: -15px 0 0 -15px;
-        border-radius: 50%;
-        background: radial-gradient(
-          circle at 50% 50%,
-          color-mix(in srgb, #0a0a0a 20%, transparent) 0%,
-          color-mix(in srgb, #0a0a0a 6%, transparent) 50%,
-          transparent 70%
-        );
-        transform: scale(calc(0.65 + 0.5 * var(--audio-signal, 0.34)));
-        opacity: calc(0.28 + 0.62 * var(--audio-signal, 0.34));
-        filter: blur(0.2px);
-        transition:
-          transform 68ms cubic-bezier(0.25, 0.88, 0.28, 1),
-          opacity 0.16s ease;
-        pointer-events: none;
-        z-index: 0;
+      :root {
+        --audio-wave-morph: 0;
       }
 
-      .audio-dock__signal__ring {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 20px;
-        height: 20px;
-        margin: -10px 0 0 -10px;
-        border-radius: 50%;
-        box-sizing: border-box;
-        border: 1.25px solid rgba(10, 10, 10, 0.25);
-        opacity: calc(0.4 + 0.55 * var(--audio-signal-ring, 0.32));
-        transform: scale(calc(0.82 + 0.3 * var(--audio-signal-ring, 0.32)));
-        transition:
-          transform 78ms cubic-bezier(0.22, 0.9, 0.3, 1),
-          opacity 0.16s ease;
-        pointer-events: none;
-        z-index: 1;
-      }
-
-      .audio-dock__signal__dot {
-        position: relative;
-        z-index: 2;
+      .audio-dock__eq-svg {
         display: block;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: #0a0a0a;
-        box-shadow:
-          0 0 0 0.4px rgba(255, 255, 255, 0.35) inset,
-          0 0 calc(2px + 6px * var(--audio-signal, 0.34)) color-mix(in srgb, #0a0a0a 22%, transparent);
-        transform: scale(calc(0.65 + 0.42 * var(--audio-signal, 0.34)));
-        transition: transform 60ms cubic-bezier(0.25, 0.9, 0.32, 1);
-        pointer-events: none;
-        will-change: transform;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        shape-rendering: auto;
+        transform-origin: 50% 50%;
       }
 
-      #nav-audio-toggle {
-        --audio-signal: 0.34;
-        --audio-signal-ring: 0.32;
+      .audio-dock__eq-bar {
+        stroke: none;
+        fill: currentColor;
+        opacity: calc(0.76 + 0.24 * var(--audio-wave-morph, 0));
       }
 
-      body.audio-active .audio-dock__signal__halo {
-        opacity: calc(0.45 + 0.5 * var(--audio-signal, 0.34));
-        background: radial-gradient(
-          circle at 50% 50%,
-          color-mix(in srgb, #0a0a0a 26%, transparent) 0%,
-          color-mix(in srgb, #0a0a0a 8%, transparent) 52%,
-          transparent 72%
-        );
-      }
-
-      body.music-playing .audio-dock__signal__dot {
-        background: #000;
-        box-shadow:
-          0 0 0 0.35px rgba(255, 255, 255, 0.4) inset,
-          0 0 calc(3px + 7px * var(--audio-signal, 0.34)) color-mix(in srgb, #0a0a0a 28%, transparent);
-      }
-
-      body.journey-flower-active .audio-dock__signal__halo {
-        background: radial-gradient(
-          circle at 50% 50%,
-          color-mix(in srgb, var(--journey-rail) 22%, #0a0a0a) 0%,
-          color-mix(in srgb, #0a0a0a 8%, transparent) 52%,
-          transparent 70%
-        );
-      }
-
-      body.journey-flower-active .audio-dock__signal__ring {
-        border-color: color-mix(in srgb, var(--journey-rail) 45%, rgba(10, 10, 10, 0.28));
+      body.journey-flower-active .audio-dock__signal {
+        color: color-mix(in srgb, #0a0a0a 72%, var(--journey-rail) 28%);
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .audio-dock__signal__halo,
-        .audio-dock__signal__ring,
-        .audio-dock__signal__dot {
-          transition-duration: 0.01ms;
+        .audio-dock__eq-bar {
+          opacity: 0.82;
+        }
+
+        .audio-dock .nav-player-wrap::before {
+          transition: none;
+        }
+
+        .audio-dock--liquid .nav-player-wrap::before {
+          transform: scaleX(1);
+          opacity: 1;
+        }
+
+        .audio-dock--liquid .nav-mini-info {
+          animation: none;
+          animation-delay: 0s;
+          opacity: 1;
+          -webkit-clip-path: none;
+          clip-path: none;
         }
       }
 
@@ -823,9 +770,11 @@
         display: flex;
         align-items: stretch;
         justify-content: center;
-        min-height: 0;
+        min-height: 2.25rem;
+        max-height: 3.5rem;
         margin: 0;
-        padding: 0;
+        /* Same inset when strip is “closed” so removing .audio-dock--liquid doesn’t reflow mid-grid tween. */
+        padding: 0.2rem 0.45rem 0.2rem 0.2rem;
         pointer-events: none;
         overflow: hidden;
         border: none;
@@ -837,19 +786,77 @@
         transform: translateZ(0);
       }
 
-      .audio-dock--liquid .nav-player-wrap {
-        min-width: min(9.5rem, 42vw);
-        min-height: 2.25rem;
-        max-height: 3.5rem;
-        padding: 0.2rem 0.45rem 0.2rem 0.2rem;
-        margin: 0;
-        pointer-events: auto;
-        overflow: visible;
+      /* Fills after the EQ button: scales in from the left in sync with the grid column. */
+      .audio-dock .nav-player-wrap::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        border-radius: inherit;
+        background: var(--ad-liquid-fill);
+        transform: scaleX(0);
+        transform-origin: left center;
+        opacity: 0;
+        transition:
+          transform var(--ad-grid-dur) var(--ad-grid-ease),
+          opacity 0.2s ease,
+          background 0.2s ease;
+        z-index: 0;
+        pointer-events: none;
       }
 
-      .audio-dock--liquid .nav-player-wrap:hover,
-      .audio-dock--liquid .nav-player-wrap:focus-within {
-        background: color-mix(in srgb, #faf6f0 90%, #e8e2da);
+      .audio-dock--liquid .nav-player-wrap::before {
+        opacity: 1;
+        transform: scaleX(1);
+      }
+
+      .audio-dock--liquid .nav-player-wrap:hover::before,
+      .audio-dock--liquid .nav-player-wrap:focus-within::before {
+        background: var(--ad-liquid-fill-hover);
+      }
+
+      .audio-dock--liquid .nav-player-wrap {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        box-sizing: border-box;
+        margin: 0;
+        pointer-events: auto;
+        overflow: hidden;
+        justify-self: stretch;
+      }
+
+      @keyframes nav-liquid-text-reveal {
+        from {
+          opacity: 0;
+          -webkit-clip-path: inset(0 100% 0 0);
+          clip-path: inset(0 100% 0 0);
+        }
+        to {
+          opacity: 1;
+          -webkit-clip-path: inset(0 0 0 0);
+          clip-path: inset(0 0 0 0);
+        }
+      }
+
+      .audio-dock:not(.audio-dock--liquid) .nav-mini-info {
+        animation: none;
+        opacity: 1;
+        -webkit-clip-path: none;
+        clip-path: none;
+      }
+
+      .audio-dock--liquid .nav-mini-info {
+        position: relative;
+        z-index: 1;
+        opacity: 0;
+        -webkit-clip-path: inset(0 100% 0 0);
+        clip-path: inset(0 100% 0 0);
+        animation: nav-liquid-text-reveal var(--ad-grid-dur) var(--ad-grid-ease) forwards;
+        /* Let the ::before wipe lead so glyphs don’t show ahead of the fill. */
+        animation-delay: calc(var(--ad-grid-dur) * 0.22);
       }
 
       .nav-mini-player {
@@ -902,11 +909,18 @@
       .nav-mini-info {
         flex: 1;
         min-width: 0;
+        width: 100%;
         align-self: stretch;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0 0.1rem;
+      }
+
+      .audio-dock--liquid .nav-mini-info {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 100%;
       }
 
       .nav-mini-mq.nav-mini-mq--title {
@@ -1280,22 +1294,12 @@
           width: 28px;
           height: 28px;
         }
-        .audio-dock__signal__halo {
-          width: 24px;
-          height: 24px;
-          margin: -12px 0 0 -12px;
+        .audio-dock__eq-svg {
+          width: 28px;
+          height: 28px;
         }
-        .audio-dock__signal__ring {
-          width: 18px;
-          height: 18px;
-          margin: -9px 0 0 -9px;
-        }
-        .audio-dock__signal__dot {
-          width: 4.5px;
-          height: 4.5px;
-        }
-        .audio-dock--liquid .nav-player-wrap {
-          min-width: min(8.5rem, 52vw);
+        .audio-dock {
+          --ad-liquid-w: 10.25rem;
         }
         .nav-mini-btn {
           width: 1.2rem;
@@ -2355,13 +2359,35 @@
             type="button"
             class="audio-dock__eq-btn"
             id="nav-audio-toggle"
-            aria-label="Play or pause audio. Hold to show track and controls."
+            aria-label="Audio: play or pause. Hold to show track and controls."
             aria-pressed="false"
           >
             <span class="audio-dock__visual audio-dock__signal" aria-hidden="true">
-              <span class="audio-dock__signal__halo"></span>
-              <span class="audio-dock__signal__ring"></span>
-              <span class="audio-dock__signal__dot"></span>
+              <svg
+                class="audio-dock__eq-svg"
+                width="30"
+                height="30"
+                viewBox="0 0 128 128"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <title>Audio</title>
+                <path
+                  id="nav-audio-eq-0"
+                  class="audio-dock__eq-bar"
+                  d="M 35.50 88 L 35.50 48.98 Q 35.50 43.48 41.00 43.48 L 43.00 43.48 Q 48.50 43.48 48.50 48.98 L 48.50 88 Z"
+                />
+                <path
+                  id="nav-audio-eq-1"
+                  class="audio-dock__eq-bar"
+                  d="M 57.50 88 L 57.50 48.98 Q 57.50 43.48 63.00 43.48 L 65.00 43.48 Q 70.50 43.48 70.50 48.98 L 70.50 88 Z"
+                />
+                <path
+                  id="nav-audio-eq-2"
+                  class="audio-dock__eq-bar"
+                  d="M 79.50 88 L 79.50 48.98 Q 79.50 43.48 85.00 43.48 L 87.00 43.48 Q 92.50 43.48 92.50 48.98 L 92.50 88 Z"
+                />
+              </svg>
             </span>
           </button>
           <div class="nav-player-wrap" id="nav-player-wrap" aria-hidden="true">

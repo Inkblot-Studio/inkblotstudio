@@ -9,7 +9,10 @@ export interface MusicTrack {
   loop?: boolean;
 }
 
-/** Files in `public/music/copyright/` → `/music/copyright/…` (encode filenames with spaces/parens). */
+/**
+ * Files in `public/music/copyright/` → `/music/copyright/…`.
+ * Encode segments; avoid `,` in filenames — Vite’s static dev server falls through to `index.html` for `%2C` paths.
+ */
 function copyrightTrack(file: string): string {
   return `/music/copyright/${encodeURIComponent(file)}`;
 }
@@ -17,8 +20,11 @@ function copyrightTrack(file: string): string {
 /** Master peak — music is intentionally quiet so UX / spatial read stays in front. */
 const MASTER_OUTPUT_PEAK = 0.1;
 
-const MUSIC_FADE_IN_SEC = 0.95;
-const MUSIC_FADE_OUT_SEC = 0.8;
+/** ~Audible “zero” for exponential ramps (must stay > 0 until the final instant). */
+const GAIN_EPS = 0.0001;
+
+const MUSIC_FADE_IN_SEC = 1.15;
+const MUSIC_FADE_OUT_SEC = 1.05;
 const TRACK_XFADE_OUT_SEC = 0.22;
 const TRACK_XFADE_IN_SEC = 0.4;
 
@@ -37,16 +43,14 @@ const UI_SFX_BUS = 0.38;
 
 const MUSIC_LIBRARY: MusicTrack[] = [
   {
-    label: 'Everything In Its Right Place',
-    artist: 'Alexandra Fever',
-    src: copyrightTrack('Alexandra Fever - Everything In Its Right Place (SPOTISAVER).mp3'),
-    loop: true,
+    label: 'Subway Run',
+    artist: 'Lō-fÿkkø, soave lofi',
+    src: copyrightTrack('Lō-fÿkkø soave lofi - Subway Run.mp3'),
   },
   {
-    label: 'Ascension',
-    artist: 'Jason Fervento',
-    src: copyrightTrack('Jason Fervento - Ascension (SPOTISAVER).mp3'),
-    loop: true,
+    label: 'In The Air Tonight',
+    artist: 'Flott.',
+    src: copyrightTrack('Flott. - In The Air Tonight.mp3'),
   },
 ];
 
@@ -89,6 +93,12 @@ export class AudioSystem implements ISystem {
   private bassBaseline = 0;
   private beatRefractoryUntil = 0;
 
+  private readonly onTrackEnded = (): void => {
+    if (!this.isPlaying || this.tracks.length === 0) return;
+    if (this.trackSwapTimer != null) return;
+    this.crossfadeToIndex((i) => (i + 1) % this.tracks.length);
+  };
+
   consumeBeatPulse(): boolean {
     if (!this.beatPulsePending) return false;
     this.beatPulsePending = false;
@@ -117,16 +127,66 @@ export class AudioSystem implements ISystem {
     if (!el) return;
     const t = this.tracks[this.trackIndex];
     if (!t) return;
-    el.loop = t.loop !== false;
+    try {
+      el.pause();
+    } catch {
+      /* ignore */
+    }
+    el.loop = t.loop === true;
     el.src = t.src;
     el.load();
+  }
+
+  /** After `src` / `load()`, browsers often need `canplay` before `play()` succeeds (fixes track 2+). */
+  private async playWhenReady(): Promise<boolean> {
+    const el = this.mediaEl;
+    if (!el || !this.isPlaying) return false;
+
+    await new Promise<void>((resolve) => {
+      if (el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+        resolve();
+        return;
+      }
+      const done = (): void => {
+        el.removeEventListener('canplay', onReady);
+        el.removeEventListener('error', onErr);
+        resolve();
+      };
+      const onReady = (): void => done();
+      const onErr = (): void => done();
+      el.addEventListener('canplay', onReady, { once: true });
+      el.addEventListener('error', onErr, { once: true });
+    });
+
+    if (!this.isPlaying) return false;
+    try {
+      await el.play();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Shared `AudioContext` + UI bus — safe to call before full music init (clicks/hovers work with music off). */
+  private ensureContextAndUiBus(): void {
+    if (typeof window === 'undefined') return;
+    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!this.audioCtx) {
+      this.audioCtx = new AC();
+    }
+    if (!this.uiSfxGain) {
+      this.uiSfxGain = this.audioCtx.createGain();
+      this.uiSfxGain.gain.value = UI_SFX_BUS;
+      this.uiSfxGain.connect(this.audioCtx.destination);
+    }
   }
 
   private async initAudio(): Promise<void> {
     if (this.initialized) return;
 
-    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    this.audioCtx = new AC();
+    this.ensureContextAndUiBus();
+    if (!this.audioCtx) return;
+
     this.analyser = this.audioCtx.createAnalyser();
     this.analyser.fftSize = 1024;
     this.analyser.smoothingTimeConstant = 0.35;
@@ -135,12 +195,9 @@ export class AudioSystem implements ISystem {
     this.masterGain = this.audioCtx.createGain();
     this.masterGain.gain.value = 0;
 
-    this.uiSfxGain = this.audioCtx.createGain();
-    this.uiSfxGain.gain.value = UI_SFX_BUS;
-    this.uiSfxGain.connect(this.audioCtx.destination);
-
     this.mediaEl = new Audio();
     this.mediaEl.preload = 'auto';
+    this.mediaEl.addEventListener('ended', this.onTrackEnded);
 
     this.mediaSource = this.audioCtx.createMediaElementSource(this.mediaEl);
     this.mediaSource.connect(this.analyser);
@@ -164,14 +221,14 @@ export class AudioSystem implements ISystem {
     if (!this.initialized || !this.audioCtx || !this.masterGain || !this.mediaEl) {
       this.trackIndex = nextIndex(this.trackIndex);
       this.wireCurrentTrack();
-      if (this.isPlaying && this.mediaEl) void this.mediaEl.play().catch(() => {});
+      if (this.isPlaying) void this.playWhenReady();
       return;
     }
 
     if (!this.isPlaying) {
       this.trackIndex = nextIndex(this.trackIndex);
       this.wireCurrentTrack();
-      if (this.isPlaying) void this.mediaEl.play().catch(() => {});
+      if (this.isPlaying) void this.playWhenReady();
       return;
     }
 
@@ -183,20 +240,25 @@ export class AudioSystem implements ISystem {
     const g = this.masterGain.gain;
     const now = ctx.currentTime;
     g.cancelScheduledValues(now);
-    g.setValueAtTime(Math.max(0, g.value), now);
-    g.linearRampToValueAtTime(0, now + TRACK.OUT);
+    const out0 = Math.max(GAIN_EPS, g.value);
+    g.setValueAtTime(out0, now);
+    g.exponentialRampToValueAtTime(GAIN_EPS, now + TRACK.OUT);
 
     this.trackSwapTimer = setTimeout(() => {
       this.trackSwapTimer = null;
       if (myGen !== this.opGen) return;
       this.trackIndex = nextIndex(this.trackIndex);
       this.wireCurrentTrack();
-      void this.mediaEl?.play().catch(() => {});
-      if (!this.audioCtx || !this.masterGain) return;
-      const t0 = this.audioCtx.currentTime;
-      this.masterGain.gain.setValueAtTime(0, t0);
-      this.masterGain.gain.linearRampToValueAtTime(MASTER_OUTPUT_PEAK, t0 + TRACK.IN);
-    }, TRACK.OUT * 1000 + 20);
+      void this.playWhenReady().then((ok) => {
+        if (myGen !== this.opGen || !ok) return;
+        if (!this.audioCtx || !this.masterGain) return;
+        const t0 = this.audioCtx.currentTime;
+        const gi = this.masterGain.gain;
+        gi.cancelScheduledValues(t0);
+        gi.setValueAtTime(GAIN_EPS, t0);
+        gi.exponentialRampToValueAtTime(MASTER_OUTPUT_PEAK, t0 + TRACK.IN);
+      });
+    }, TRACK.OUT * 1000 + 40);
   }
 
   nextTrack(): void {
@@ -227,85 +289,153 @@ export class AudioSystem implements ISystem {
       this.clearMusicAsyncTimers();
       this.bumpOpGen();
       g.cancelScheduledValues(now);
-      g.setValueAtTime(0, now);
-      try {
-        await this.mediaEl.play();
-      } catch {
+      g.setValueAtTime(GAIN_EPS, now);
+      const started = await this.playWhenReady();
+      if (!started) {
         this.isPlaying = false;
         return;
       }
-      g.linearRampToValueAtTime(MASTER_OUTPUT_PEAK, now + MUSIC.FADE_IN);
+      const t1 = this.audioCtx.currentTime;
+      g.cancelScheduledValues(t1);
+      g.setValueAtTime(GAIN_EPS, t1);
+      g.exponentialRampToValueAtTime(MASTER_OUTPUT_PEAK, t1 + MUSIC.FADE_IN);
     } else {
       this.clearMusicAsyncTimers();
       this.bumpOpGen();
       const stopId = this.opGen;
       g.cancelScheduledValues(now);
-      g.setValueAtTime(Math.max(0, g.value), now);
-      g.linearRampToValueAtTime(0, now + MUSIC.FADE_OUT);
+      const out0 = Math.max(GAIN_EPS, g.value);
+      g.setValueAtTime(out0, now);
+      g.exponentialRampToValueAtTime(GAIN_EPS, now + MUSIC.FADE_OUT);
       this.stopPauseTimer = setTimeout(() => {
         this.stopPauseTimer = null;
         if (this.isPlaying) return;
         if (this.opGen !== stopId) return;
         this.mediaEl?.pause();
-      }, MUSIC.FADE_OUT * 1000 + 30);
+      }, MUSIC.FADE_OUT * 1000 + 80);
     }
   };
 
   /**
-   * Soft, glassy lift — only when the score is on (`isPlaying`); throttled in-engine.
+   * Soft UI hover — works even when the score is paused (lazy `AudioContext`).
    */
   playInterfaceHover(): void {
     this.playOneShotSfx('hover');
   }
 
   /**
-   * Low, short tactile tick — for primary controls; only when the score is on.
+   * Primary click — works even when the score is paused.
    */
   playInterfaceClick(): void {
     this.playOneShotSfx('click');
   }
 
+  /** Short band-limited noise burst for tactile “snap” (distinct from pure tones). */
+  private playUiNoiseClick(ctx: AudioContext, t0: number, into: AudioNode): void {
+    const sr = ctx.sampleRate;
+    const durS = 0.026;
+    const n = Math.max(1, Math.floor(durS * sr));
+    const buf = ctx.createBuffer(1, n, sr);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) {
+      const env = Math.pow(1 - i / Math.max(1, n - 1), 3.2);
+      ch[i] = (Math.random() * 2 - 1) * env * 0.95;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(2680, t0);
+    bp.Q.setValueAtTime(0.85, t0);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.11, t0 + 0.00045);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.019);
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(into);
+    src.start(t0);
+    src.stop(t0 + durS + 0.002);
+  }
+
   private playOneShotSfx(kind: 'hover' | 'click'): void {
-    if (!this.isPlaying || !this.initialized || !this.audioCtx || !this.uiSfxGain) return;
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
+    this.ensureContextAndUiBus();
+    if (!this.audioCtx || !this.uiSfxGain) return;
     if (this.audioCtx.state === 'suspended') {
       void this.audioCtx.resume();
     }
+
     if (kind === 'hover') {
       const tWall = typeof performance !== 'undefined' ? performance.now() : 0;
-      if (tWall - this.lastUiHoverAt < 100) return;
+      if (tWall - this.lastUiHoverAt < 72) return;
       this.lastUiHoverAt = tWall;
-      const t0 = this.audioCtx.currentTime;
-      const osc = this.audioCtx.createOscillator();
-      osc.type = 'sine';
-      const peak = 0.16;
-      const startHz = 1680;
-      const endHz = 1240;
-      osc.frequency.setValueAtTime(startHz, t0);
-      osc.frequency.exponentialRampToValueAtTime(Math.max(80, endHz), t0 + 0.1);
-      const g = this.audioCtx.createGain();
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.006);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.1);
-      osc.connect(g);
-      g.connect(this.uiSfxGain);
-      osc.start(t0);
-      osc.stop(t0 + 0.11);
+    }
+
+    const ctx = this.audioCtx;
+    const t0 = ctx.currentTime;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = kind === 'hover' ? 380 : 120;
+    hp.Q.value = 0.5;
+    const bus = ctx.createGain();
+    bus.gain.value = kind === 'hover' ? 0.92 : 0.96;
+    bus.connect(hp);
+    hp.connect(this.uiSfxGain);
+
+    const startStop = (o: OscillatorNode, g: GainNode, until: number): void => {
+      o.connect(g);
+      g.connect(bus);
+      o.start(t0);
+      o.stop(until);
+    };
+
+    if (kind === 'hover') {
+      /* Glassy up-chirp + faint fifth — reads as “hover”, not a click. */
+      const a = ctx.createOscillator();
+      a.type = 'sine';
+      a.frequency.setValueAtTime(1420, t0);
+      a.frequency.linearRampToValueAtTime(2680, t0 + 0.034);
+      const gA = ctx.createGain();
+      gA.gain.setValueAtTime(0.0001, t0);
+      gA.gain.linearRampToValueAtTime(0.048, t0 + 0.0022);
+      gA.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.055);
+      startStop(a, gA, t0 + 0.062);
+
+      const b = ctx.createOscillator();
+      b.type = 'sine';
+      b.frequency.setValueAtTime(2130, t0);
+      b.frequency.linearRampToValueAtTime(4020, t0 + 0.028);
+      const gB = ctx.createGain();
+      gB.gain.setValueAtTime(0.0001, t0);
+      gB.gain.linearRampToValueAtTime(0.018, t0 + 0.0018);
+      gB.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.042);
+      startStop(b, gB, t0 + 0.048);
     } else {
-      const t0 = this.audioCtx.currentTime;
-      const osc = this.audioCtx.createOscillator();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(620, t0);
-      const g = this.audioCtx.createGain();
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(0.24, t0 + 0.0018);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
-      osc.connect(g);
-      g.connect(this.uiSfxGain);
-      osc.start(t0);
-      osc.stop(t0 + 0.055);
+      this.playUiNoiseClick(ctx, t0, bus);
+
+      const wood = ctx.createOscillator();
+      wood.type = 'sine';
+      wood.frequency.setValueAtTime(188, t0);
+      wood.frequency.exponentialRampToValueAtTime(72, t0 + 0.024);
+      const gW = ctx.createGain();
+      gW.gain.setValueAtTime(0.0001, t0);
+      gW.gain.linearRampToValueAtTime(0.11, t0 + 0.0014);
+      gW.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.048);
+      startStop(wood, gW, t0 + 0.058);
+
+      const tack = ctx.createOscillator();
+      tack.type = 'triangle';
+      tack.frequency.setValueAtTime(620, t0);
+      tack.frequency.exponentialRampToValueAtTime(240, t0 + 0.012);
+      const gT = ctx.createGain();
+      gT.gain.setValueAtTime(0.0001, t0);
+      gT.gain.linearRampToValueAtTime(0.045, t0 + 0.00055);
+      gT.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.022);
+      startStop(tack, gT, t0 + 0.028);
     }
   }
 
@@ -390,6 +520,7 @@ export class AudioSystem implements ISystem {
 
   dispose(): void {
     this.clearMusicAsyncTimers();
+    this.mediaEl?.removeEventListener('ended', this.onTrackEnded);
     this.mediaEl?.pause();
     try {
       this.mediaSource?.disconnect();
